@@ -1,0 +1,25 @@
+plugins {
+    id 'java'
+    id 'org.openjfx.javafxplugin' version '0.0.7'
+    id "net.ltgt.errorprone" version "0.7.1"
+}
+
+javafx {
+    //we might not need swing, but media allows for audio/video
+    modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.media', 'javafx.swing' ] 
+}
+
+group 'MultiplexChatService'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.11
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    // https://mvnrepository.com/artifact/org.apache.cassandra/cassandra-all
+    compile group: 'org.apache.cassandra', name: 'cassandra-all', version: '3.11.4'
+}
