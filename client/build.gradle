@@ -1,3 +1,4 @@
+
 plugins {
     id 'org.openjfx.javafxplugin' version '0.0.7'
 }
@@ -5,7 +6,12 @@ plugins {
 javafx {
     modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.media', 'javafx.swing' ]
 }
-
+dependencies {
+    /* uncomment for cross-platform jar: */
+    compileOnly "org.openjfx:javafx-graphics:$javafx.version:win"
+//    compileOnly "org.openjfx:javafx-graphics:$javafx.version:linux"
+//    compileOnly "org.openjfx:javafx-graphics:$javafx.version:mac"
+}
 application {
     mainClassName = "Main"
 }
@@ -14,9 +20,9 @@ application {
 jar{
 
     manifest{
-        attributes 'Main-Class': 'Main'
+        attributes 'Main-Class': 'Launcher'
     }
     from {
-        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+        configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
 }
