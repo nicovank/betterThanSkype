@@ -1,24 +1,33 @@
+import org.apache.tools.ant.taskdefs.condition.Os
 plugins {
-    id 'java'
-    id 'application'
     id 'org.openjfx.javafxplugin' version '0.0.7'
 }
-
-group 'csc445'
-version '0.1'
 
 javafx {
     modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.media', 'javafx.swing' ]
 }
-
+dependencies {
+    if(Os.isFamily(Os.FAMILY_WINDOWS)) {
+        compileOnly "org.openjfx:javafx-graphics:$javafx.version:win"
+    }
+    else if(Os.isFamily(Os.FAMILY_MAC)) {
+        compileOnly "org.openjfx:javafx-graphics:$javafx.version:mac"
+    }
+    else if(Os.isFamily(Os.FAMILY_UNIX)){
+        compileOnly "org.openjfx:javafx-graphics:$javafx.version:linux"
+    }
+}
 application {
     mainClassName = "Main"
 }
 
-repositories {
-    mavenCentral()
-}
 
-dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+jar{
+
+    manifest{
+        attributes 'Main-Class': 'Launcher'
+    }
+    from {
+        configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
 }
