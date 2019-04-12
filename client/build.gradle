@@ -1,4 +1,4 @@
-
+import org.apache.tools.ant.taskdefs.condition.Os
 plugins {
     id 'org.openjfx.javafxplugin' version '0.0.7'
 }
@@ -7,10 +7,15 @@ javafx {
     modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.media', 'javafx.swing' ]
 }
 dependencies {
-    /* uncomment for cross-platform jar: */
-    compileOnly "org.openjfx:javafx-graphics:$javafx.version:win"
-//    compileOnly "org.openjfx:javafx-graphics:$javafx.version:linux"
-//    compileOnly "org.openjfx:javafx-graphics:$javafx.version:mac"
+    if(Os.isFamily(Os.FAMILY_WINDOWS)) {
+        compileOnly "org.openjfx:javafx-graphics:$javafx.version:win"
+    }
+    else if(Os.isFamily(Os.FAMILY_MAC)) {
+        compileOnly "org.openjfx:javafx-graphics:$javafx.version:mac"
+    }
+    else if(Os.isFamily(Os.FAMILY_UNIX)){
+        compileOnly "org.openjfx:javafx-graphics:$javafx.version:linux"
+    }
 }
 application {
     mainClassName = "Main"
