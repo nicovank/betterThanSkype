@@ -1,3 +1,4 @@
+import org.apache.tools.ant.taskdefs.condition.Os
 plugins {
     id 'org.openjfx.javafxplugin' version '0.0.7'
 }
@@ -5,7 +6,17 @@ plugins {
 javafx {
     modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.media', 'javafx.swing' ]
 }
-
+dependencies {
+    if(Os.isFamily(Os.FAMILY_WINDOWS)) {
+        compileOnly "org.openjfx:javafx-graphics:$javafx.version:win"
+    }
+    else if(Os.isFamily(Os.FAMILY_MAC)) {
+        compileOnly "org.openjfx:javafx-graphics:$javafx.version:mac"
+    }
+    else if(Os.isFamily(Os.FAMILY_UNIX)){
+        compileOnly "org.openjfx:javafx-graphics:$javafx.version:linux"
+    }
+}
 application {
     mainClassName = "Main"
 }
@@ -14,9 +25,9 @@ application {
 jar{
 
     manifest{
-        attributes 'Main-Class': 'Main'
+        attributes 'Main-Class': 'Launcher'
     }
     from {
-        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+        configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
 }
