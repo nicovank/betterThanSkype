@@ -1,5 +1,3 @@
-package Client;
-
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -10,11 +8,11 @@ public class Main extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        Parent root = FXMLLoader.load(getClass().getResource("/fxml/Client.fxml"));
+        Parent root = FXMLLoader.load(getClass().getResource("/fxml/main.fxml"));
 
-        Scene scene = new Scene(root, 500, 475);
+        Scene scene = new Scene(root, 500, 500);
 
-        stage.setTitle("FXML Welcome");
+        stage.setTitle("Hello, World!");
         stage.setScene(scene);
         stage.show();
     }

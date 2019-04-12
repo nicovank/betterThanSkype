@@ -1,10 +1,14 @@
 plugins {
     id 'java'
-    id "net.ltgt.errorprone" version "0.7.1"
+    id 'application'
 }
 
 group 'csc445'
 version '0.1'
+
+application {
+    mainClassName = "Main"
+}
 
 repositories {
     mavenCentral()
@@ -12,5 +16,4 @@ repositories {
 
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
-    errorprone("com.google.errorprone:error_prone_core:2.3.3")
 }
