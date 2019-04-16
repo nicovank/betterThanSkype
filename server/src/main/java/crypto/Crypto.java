@@ -37,7 +37,7 @@ public class Crypto {
             this.pub = pair.getPublic();
             this.pvt = pair.getPrivate();
         } catch (GeneralSecurityException e) {
-            throw new CryptoException("Could not successfully generate public and private keys..", e);
+            throw new CryptoException("Could not successfully generate public and private keys.", e);
         }
     }
 
