@@ -1,10 +1,19 @@
+plugins {
+    id 'application'
+}
+
 application {
     mainClassName = "Main"
 }
 
-jar{
+dependencies {
+    compile project(":api")
+}
+
+jar {
     manifest{
         attributes 'Main-Class': 'Main'
     }
+
     from configurations.compile.collect { zipTree(it) }
 }
