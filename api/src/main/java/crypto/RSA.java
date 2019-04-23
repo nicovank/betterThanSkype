@@ -7,14 +7,11 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 
 /**
- * This class provides utilities for encryption and decryption of messages.
+ * This class provides utilities for encryption and decryption of messages using RSA.
  * Its methods are based on the builtin Java methods from `java.security` and
  * `javax.crypto`.
- *
- * Since this class will be used by both client and server, we might want to
- * move it to a separate subproject if we have many classes with this property.
  */
-public class Crypto {
+public class RSA {
 
     private static final int KEYSIZE = 4096;
     private static final int ENCRYPTED_CHUNK_SIZE = KEYSIZE / 8;
@@ -24,11 +21,11 @@ public class Crypto {
     private final PrivateKey pvt;
 
     /**
-     * This constructor creates a new Crypto object, initializing it with new keys.
+     * This constructor creates a new RSA object, initializing it with new keys.
      *
      * @throws CryptoException If there was any error generating the key pair.
      */
-    public Crypto() throws CryptoException {
+    public RSA() throws CryptoException {
         try {
             KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
             generator.initialize(KEYSIZE);
@@ -41,12 +38,12 @@ public class Crypto {
         }
     }
 
-    public Crypto(PublicKey pub, PrivateKey pvt) {
+    public RSA(PublicKey pub, PrivateKey pvt) {
         this.pub = pub;
         this.pvt = pvt;
     }
 
-    public Crypto(KeyPair keys) {
+    public RSA(KeyPair keys) {
         this(keys.getPublic(), keys.getPrivate());
     }
 
@@ -59,9 +56,9 @@ public class Crypto {
      *
      * @param encoded the encoded public key.
      * @return The public key given, as a `PublicKey` object.
-     * @throws CryptoException if there was any issues decoding the key.
+     * @throws CryptoException if there were any issues decoding the key.
      */
-    public static PublicKey decodeKey(byte[] encoded) throws CryptoException {
+    public static PublicKey decodePublicKey(byte[] encoded) throws CryptoException {
         try {
             KeyFactory factory = KeyFactory.getInstance("RSA");
             return factory.generatePublic(new X509EncodedKeySpec(encoded));
@@ -77,7 +74,7 @@ public class Crypto {
      * @param data The data to be encrypted.
      * @param key  The key to use for encryption (the intended recipient's public key)
      * @return the encrypted data as a byte array.
-     * @throws CryptoException if there was any issues with the provided key or the machine implementation of the crypto algorithms.
+     * @throws CryptoException if there were any issues with the provided key or the machine implementation of the crypto algorithms.
      */
     public static byte[] encrypt(byte[] data, PublicKey key) throws CryptoException {
         try {
@@ -106,12 +103,12 @@ public class Crypto {
     }
 
     /**
-     * This method decrypts the given encrypted data using this Crypto object's private key.
+     * This method decrypts the given encrypted data using this RSA object's private key.
      * It is therefore assumed the data was encrypted using this object's public key.
      *
      * @param encrypted the byte array to decrypt.
      * @return teh original data that was encrypted.
-     * @throws CryptoException if there was any issue decrypting the data.
+     * @throws CryptoException if there were any issue decrypting the data.
      */
     public byte[] decrypt(byte[] encrypted) throws CryptoException {
         try {
