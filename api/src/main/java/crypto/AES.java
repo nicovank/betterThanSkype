@@ -3,6 +3,7 @@ package crypto;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -32,7 +33,7 @@ public class AES {
     }
 
     public AES(String secret) throws CryptoException {
-        this(secret.getBytes());
+        this(secret.getBytes(StandardCharsets.UTF_8));
     }
 
     /**
