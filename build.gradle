@@ -5,16 +5,19 @@ plugins {
 
 subprojects {
     apply plugin: 'java'
-    apply plugin: 'application'
     apply plugin: 'net.ltgt.errorprone'
+
     repositories {
         mavenCentral()
     }
-    version '0.1'
 
     dependencies{
         testCompile group: 'junit', name: 'junit', version: '4.12'
         errorprone("com.google.errorprone:error_prone_core:2.3.3")
     }
 }
-group 'csc445'
+
+allprojects {
+    group 'csc445'
+    version '0.1'
+}
