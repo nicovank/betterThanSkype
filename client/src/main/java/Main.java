@@ -2,7 +2,6 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
 import java.util.HashMap;
@@ -12,7 +11,7 @@ public class Main extends Application {
     private Stage stage;
     private Scene main;
     private static Main instance;
-    public static Main getInstance(){
+    static Main getInstance(){
         return instance;
     }
 
@@ -21,7 +20,6 @@ public class Main extends Application {
         instance = this;
         scenes = new HashMap<>();
         this.stage = stage;
-        main = new Scene(FXMLLoader.load(getClass().getResource("/fxml/login.fxml")));
         stage.setScene(main);
         scenes.put("Messaging Window",FXMLLoader.load(getClass().getResource("/fxml/messagingWindow.fxml")));
         scenes.put("Login",FXMLLoader.load(getClass().getResource("/fxml/login.fxml")));

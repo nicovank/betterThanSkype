@@ -4,6 +4,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 
 
@@ -39,9 +40,11 @@ public class MessagingController implements IMessage,ILeaveRoom {
     }
 
     @FXML
-    public void onSubmit(ActionEvent e){
-        addMessageToChat(userName,textBox.getText());
-        textBox.clear();
+    public void onSubmit(MouseEvent e){
+        if(e.isPrimaryButtonDown()) {
+            addMessageToChat(userName, textBox.getText());
+            textBox.clear();
+        }
     }
 
     private void addMessageToChat(String userName,String message) {
