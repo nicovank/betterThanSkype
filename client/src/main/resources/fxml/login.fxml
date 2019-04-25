@@ -5,14 +5,14 @@
 <?import javafx.scene.layout.*?>
 
 
-<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="300.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+<Pane fx:controller="LoginController" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="300.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <Label layoutX="33.0" layoutY="64.0" text="Nickname:" />
       <Label layoutX="33.0" layoutY="97.0" text="Room Name:" />
       <Label layoutX="33.0" layoutY="130.0" text="Room Password:" />
       <TextField fx:id="nicknameField" layoutX="150.0" layoutY="60.0" prefHeight="25.0" prefWidth="118.0" promptText="John" />
       <TextField fx:id="roomNameLabel" layoutX="150.0" layoutY="93.0" prefHeight="25.0" prefWidth="118.0" promptText="Bedroom" />
-      <Button fx:id="createRoomButton" layoutX="184.0" layoutY="250.0" mnemonicParsing="false" text="Create" />
+      <Button fx:id="createRoomButton" onMouseClicked="#onJoin" layoutX="184.0" layoutY="250.0" mnemonicParsing="false" text="Create" />
       <Button fx:id="joinButton" layoutX="68.0" layoutY="250.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="50.0" text="Join" />
       <PasswordField fx:id="passwordField" layoutX="150.0" layoutY="126.0" prefHeight="25.0" prefWidth="118.0" promptText="Not Yours" />
    </children>

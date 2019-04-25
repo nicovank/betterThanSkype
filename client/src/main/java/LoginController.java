@@ -1,3 +1,8 @@
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.scene.input.MouseEvent;
+
+
 public class LoginController implements IEnterRoom {
 
     @Override
@@ -13,5 +18,11 @@ public class LoginController implements IEnterRoom {
     @Override
     public boolean receiveRoomData() {
         return false;
+    }
+
+    @FXML
+    private void onJoin(MouseEvent e){
+        if(e.isPrimaryButtonDown())
+            Main.getInstance().activate("Messaging Window", "Better Than Skype", 800,400 );
     }
 }

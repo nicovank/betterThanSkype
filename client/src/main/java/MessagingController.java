@@ -1,18 +1,14 @@
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-
-import java.io.IOException;
 
 
 public class MessagingController implements IMessage,ILeaveRoom {
-    String userName = "Tim Tester";
+    private String userName = "Tim Tester";
     @FXML
     private TextArea textBox;
     @FXML
