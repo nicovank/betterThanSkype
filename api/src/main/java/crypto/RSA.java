@@ -11,7 +11,7 @@ import java.util.Arrays;
  * Its methods are based on the builtin Java methods from `java.security` and
  * `javax.crypto`.
  */
-public class RSA {
+public final class RSA {
 
     private static final int KEYSIZE = 4096;
     private static final int ENCRYPTED_CHUNK_SIZE = KEYSIZE / 8;

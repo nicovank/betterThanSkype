@@ -8,7 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.util.Random;
 
-public class RSATest {
+public final class RSATest {
 
     private KeyPair generateRSAKeyPair() throws NoSuchAlgorithmException {
         KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
@@ -17,13 +17,13 @@ public class RSATest {
     }
 
     @Test
-    public void decodeKeyTest() throws GeneralSecurityException, CryptoException {
+    public void testDecodeKey() throws GeneralSecurityException, CryptoException {
         KeyPair pair = generateRSAKeyPair();
         assertEquals(pair.getPublic(), RSA.decodePublicKey(pair.getPublic().getEncoded()));
     }
 
     @Test
-    public void RSATestOnSmallString() throws GeneralSecurityException, CryptoException {
+    public void testRSAOnSmallString() throws GeneralSecurityException, CryptoException {
         KeyPair pair = generateRSAKeyPair();
         RSA rsa = new RSA(pair);
 
@@ -35,7 +35,7 @@ public class RSATest {
     }
 
     @Test
-    public void RSATestOnArrayOfRandomBytes() throws GeneralSecurityException, CryptoException {
+    public void testRSAOnArrayOfRandomBytes() throws GeneralSecurityException, CryptoException {
         KeyPair pair = generateRSAKeyPair();
         RSA rsa = new RSA(pair);
 

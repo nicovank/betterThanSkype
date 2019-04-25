@@ -13,7 +13,7 @@ import java.security.NoSuchAlgorithmException;
  * Its methods are based on the builtin Java methods from `java.security` and
  * `javax.crypto`.
  */
-public class AES {
+public final class AES {
 
     private static SecretKey key;
 

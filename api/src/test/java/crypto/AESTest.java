@@ -4,15 +4,14 @@ import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Random;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
-public class AESTest {
+public final class AESTest {
 
-    private byte[] generateAESSecretKey() throws NoSuchAlgorithmException {
+    private byte[] generateAESSecretKey() {
         Random random = new Random();
         byte[] array = new byte[random.nextInt(4095) + 1];
         random.nextBytes(array);
@@ -20,7 +19,7 @@ public class AESTest {
     }
 
     @Test
-    public void AESTestOnSmallString() throws GeneralSecurityException, CryptoException {
+    public void testAESOnSmallString() throws GeneralSecurityException, CryptoException {
         byte[] key = generateAESSecretKey();
         AES aes = new AES(key);
 
@@ -32,7 +31,7 @@ public class AESTest {
     }
 
     @Test
-    public void AESTestOnArrayOfRandomBytes() throws GeneralSecurityException, CryptoException {
+    public void testAESOnArrayOfRandomBytes() throws GeneralSecurityException, CryptoException {
         byte[] key = generateAESSecretKey();
         AES aes = new AES(key);
 
