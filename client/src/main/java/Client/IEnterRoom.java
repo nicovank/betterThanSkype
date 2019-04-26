@@ -1,3 +1,5 @@
+package Client;
+
 public interface IEnterRoom {
 
     boolean requestNewRoom(String nickname, String roomID, String password);
