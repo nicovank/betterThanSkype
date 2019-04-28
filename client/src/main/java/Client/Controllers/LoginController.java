@@ -38,7 +38,7 @@ public class LoginController implements IEnterRoom {
         System.out.println("Primary Click");
         if(hasCorrectInput()){
             System.out.println("Moving Scene");
-            Main.getInstance().activate("Messaging Client.Window");
+            Main.getInstance().activate("Messaging Window");
             MessagingController messagingController = (MessagingController)Main.getInstance().getCurrentWindow().getController();
             messagingController.initializeChatRoom(nicknameField.getText(),roomNameLabel.getText());
         }
@@ -50,8 +50,9 @@ public class LoginController implements IEnterRoom {
                 throw new EmptyFieldException(nicknameField);
             else if(roomNameLabel.getText().isBlank() || roomNameLabel.getText().isEmpty())
                 throw new EmptyFieldException(roomNameLabel);
+            else if(passwordField.getText().isBlank() || passwordField.getText().isEmpty())
+                throw new EmptyFieldException(passwordField);
         } catch (EmptyFieldException ex) {
-
             ex.getEmptyField().requestFocus();
             Alert errorAlert = new Alert(Alert.AlertType.ERROR);
             errorAlert.setHeaderText("Empty Field Found!");

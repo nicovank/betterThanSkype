@@ -39,7 +39,7 @@ public class MessagingController implements IMessage, ILeaveRoom {
     void initializeChatRoom(String userName,String roomName){
         this.userName = userName;
         this.roomName.setText(roomName);
-        memberList.getChildren().add(new Label(userName));
+        memberList.getChildren().add(new Label(userName)); //when video/audio gets added this will need changing
     }
 
     @FXML
@@ -53,10 +53,8 @@ public class MessagingController implements IMessage, ILeaveRoom {
 
     @FXML
     public void onSubmit(MouseEvent e){
-        if(e.isPrimaryButtonDown()) {
-            addMessageToChat(userName, textBox.getText());
-            textBox.clear();
-        }
+        addMessageToChat(userName, textBox.getText());
+        textBox.clear();
     }
 
     private void addMessageToChat(String userName,String message) {

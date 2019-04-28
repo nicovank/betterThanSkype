@@ -29,7 +29,7 @@ public class Main extends Application {
         FXMLLoader loginLoader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
         Window<MessagingController> messageWindow = new Window<>(messageLoader.load(),messageLoader.getController(),"Better Than Skype",600,400);
         Window<LoginController> loginWindow = new Window<>(loginLoader.load(),loginLoader.getController(), "Login",300,400);
-        scenes.put("Messaging Client.Window",messageWindow);
+        scenes.put("Messaging Window",messageWindow);
         scenes.put("Login",loginWindow);
         activate("Login");
     }
