@@ -22,13 +22,13 @@ dependencies {
 }
 
 application {
-    mainClassName = "Main"
+    mainClassName = "Client.Launcher"
 }
 
 
 jar {
     manifest {
-        attributes 'Main-Class': 'Launcher'
+        attributes 'Main-Class': 'Client.Launcher'
     }
 
     from {

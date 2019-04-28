@@ -53,7 +53,8 @@ public class MessagingController implements IMessage, ILeaveRoom {
 
     @FXML
     public void onSubmit(MouseEvent e){
-        addMessageToChat(userName, textBox.getText());
+        String message = textBox.getText().replace("\n","");
+        addMessageToChat(userName, message);
         textBox.clear();
     }
 
