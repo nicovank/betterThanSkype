@@ -1,23 +1,26 @@
-import javafx.event.ActionEvent;
+package Client.Controllers;
+
+import Client.ILeaveRoom;
+import Client.IMessage;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.Pane;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 
-import java.io.IOException;
 
-
-public class MessagingController implements IMessage,ILeaveRoom {
-    String userName = "Tim Tester";
+public class MessagingController implements IMessage, ILeaveRoom {
+    private String userName;
     @FXML
     private TextArea textBox;
     @FXML
     private VBox chatBox;
-
+    @FXML
+    private Label roomName;
+    @FXML
+    private VBox memberList;
     @Override
     public boolean leaveRoom(String nickname, String roomID, String password) {
         return false;
@@ -33,6 +36,12 @@ public class MessagingController implements IMessage,ILeaveRoom {
         return null;
     }
 
+    void initializeChatRoom(String userName,String roomName){
+        this.userName = userName;
+        this.roomName.setText(roomName);
+        memberList.getChildren().add(new Label(userName)); //when video/audio gets added this will need changing
+    }
+
     @FXML
     public void onEnter(KeyEvent e){
 
@@ -43,8 +52,8 @@ public class MessagingController implements IMessage,ILeaveRoom {
     }
 
     @FXML
-    public void onSubmit(ActionEvent e){
-        addMessageToChat(userName,textBox.getText());
+    public void onSubmit(MouseEvent e){
+        addMessageToChat(userName, textBox.getText());
         textBox.clear();
     }
 
