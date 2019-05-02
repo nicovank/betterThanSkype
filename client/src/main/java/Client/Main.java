@@ -5,7 +5,6 @@ import Client.Controllers.MessagingController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.stage.Stage;
-
 import java.util.HashMap;
 
 public class Main extends Application {
@@ -13,10 +12,10 @@ public class Main extends Application {
     private Stage stage;
     private Window window;
     private static Main instance;
+
     public static Main getInstance(){
         return instance;
     }
-
     public static void main(String[] args) {
         launch(args);
     }

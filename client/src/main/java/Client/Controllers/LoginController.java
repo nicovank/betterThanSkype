@@ -8,7 +8,6 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 
-
 public class LoginController implements IEnterRoom {
     @FXML
     private TextField nicknameField;
@@ -34,14 +33,25 @@ public class LoginController implements IEnterRoom {
 
     @FXML
     private void onCreateRoom(MouseEvent e){
-        System.out.println("Create Room");
-        System.out.println("Primary Click");
         if(hasCorrectInput()){
-            System.out.println("Moving Scene");
-            Main.getInstance().activate("Messaging Window");
-            MessagingController messagingController = (MessagingController)Main.getInstance().getCurrentWindow().getController();
-            messagingController.initializeChatRoom(nicknameField.getText(),roomNameLabel.getText());
+            //create room
+            moveScene();
         }
+    }
+
+    @FXML
+    private void onJoinRoom(MouseEvent e){
+        if(hasCorrectInput()){
+            //and authentication for room
+            moveScene();
+        }
+    }
+
+    private void moveScene(){
+        System.out.println("Moving Scene");
+        Main.getInstance().activate("Messaging Window");
+        MessagingController messagingController = (MessagingController)Main.getInstance().getCurrentWindow().getController();
+        messagingController.initializeChatRoom(nicknameField.getText(),roomNameLabel.getText());
     }
 
     private boolean hasCorrectInput(){

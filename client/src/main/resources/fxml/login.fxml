@@ -14,8 +14,8 @@
                promptText="John"/>
     <TextField fx:id="roomNameLabel" layoutX="150.0" layoutY="93.0" prefHeight="25.0" prefWidth="118.0"
                promptText="Bedroom"/>
-    <Button fx:id="createButton" onMouseClicked="#onCreateRoom" layoutX="184.0" layoutY="250.0" mnemonicParsing="false" text="Create"/>
-    <Button layoutX="68.0" layoutY="250.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="50.0" text="Join"/>
+    <Button onMouseClicked="#onCreateRoom" layoutX="184.0" layoutY="250.0" mnemonicParsing="false" text="Create"/>
+    <Button onMouseClicked="#onJoinRoom" layoutX="68.0" layoutY="250.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="50.0" text="Join"/>
     <PasswordField fx:id="passwordField" layoutX="150.0" layoutY="126.0" prefHeight="25.0" prefWidth="118.0"
                    promptText="Not Yours"/>
 </Pane>
