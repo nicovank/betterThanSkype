@@ -1,7 +1,7 @@
 package Client.Controllers;
 
-import Client.IEnterRoom;
 import Client.Main;
+import Client.Sockets.RoomSocket;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.PasswordField;
@@ -15,6 +15,8 @@ public class LoginController implements IEnterRoom {
     private TextField roomNameLabel;
     @FXML
     private PasswordField passwordField;
+
+    private RoomSocket roomSocket;
 
     @Override
     public boolean requestNewRoom(String nickname, String roomID, String password) {
@@ -51,7 +53,7 @@ public class LoginController implements IEnterRoom {
         System.out.println("Moving Scene");
         Main.getInstance().activate("Messaging Window");
         MessagingController messagingController = (MessagingController)Main.getInstance().getCurrentWindow().getController();
-        messagingController.initializeChatRoom(nicknameField.getText(),roomNameLabel.getText());
+        messagingController.initializeChatRoom(nicknameField.getText(),roomNameLabel.getText(),roomSocket);
     }
 
     private boolean hasCorrectInput(){

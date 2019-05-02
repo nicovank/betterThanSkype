@@ -1,6 +1,6 @@
-package Client;
+package Client.Controllers;
 
 public interface IMessage {
     boolean sendMessage(String message);
-    String receiveMessage();
+    void receiveMessage();
 }

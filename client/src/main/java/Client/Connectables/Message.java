@@ -6,7 +6,7 @@ public final class Message implements Comparable<Message> {
     private final long timeStamp;
 
     public Message(String text, String username, long timeStamp){
-        this.text = text;
+        this.text = text.replace("\n", "");
         this.username = username;
         this.timeStamp = timeStamp;
     }
@@ -32,5 +32,9 @@ public final class Message implements Comparable<Message> {
 
     public String getText() {
         return text;
+    }
+
+    public String getFullText(){
+        return username + "says: \""+ text + "\"";
     }
 }

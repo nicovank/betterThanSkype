@@ -1,18 +1,18 @@
 package Client.Sockets;
-import packets.*;
+import Client.Connectables.Message;
 import utils.Address;
 
 public interface RoomSocket {
 
-    void sendToEveryone(Packet packet);
+    boolean sendToEveryone(String message,long timeStamp);
 
-    void sendToSingle(Packet packet, Address address);
+    boolean sendToSingle(String message, String recipient, long timeStamp);
 
-    Packet receive();
+    Message receive();
 
-    void sendToServer(Packet packet);
+    boolean sendToServer(String message);
 
-    Packet receiveFromServer();
+    String receiveFromServer();
 
     void addToSendList(String nickName,Address address);
 
