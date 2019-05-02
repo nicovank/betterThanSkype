@@ -47,8 +47,8 @@ public final class RSA {
         this(keys.getPublic(), keys.getPrivate());
     }
 
-    public byte[] getPublicKey() {
-        return pub.getEncoded();
+    public PublicKey getPublicKey() {
+        return pub;
     }
 
     /**
