@@ -2,11 +2,15 @@ package Client.Controllers;
 
 import Client.Main;
 import Client.Sockets.IRoomSocket;
+import Client.Sockets.RoomSocket;
+import crypto.CryptoException;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
+
+import java.io.IOException;
 
 public class LoginController implements IEnterRoom {
     @FXML
@@ -17,6 +21,10 @@ public class LoginController implements IEnterRoom {
     private PasswordField passwordField;
 
     private IRoomSocket roomSocket;
+
+    public LoginController() throws IOException, CryptoException {
+        roomSocket = new RoomSocket();
+    }
 
     @Override
     public boolean requestNewRoom(String nickname, String roomID, String password) {

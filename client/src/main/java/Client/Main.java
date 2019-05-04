@@ -2,8 +2,11 @@ package Client;
 
 import Client.Controllers.LoginController;
 import Client.Controllers.MessagingController;
+import Client.Events.EventNode;
+import Client.Events.MessageReceivedEvent;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.stage.Stage;
 import java.util.HashMap;
 
@@ -12,6 +15,7 @@ public class Main extends Application {
     private Stage stage;
     private Window window;
     private static Main instance;
+    private Node eventNode;
 
     public static Main getInstance(){
         return instance;
@@ -21,7 +25,6 @@ public class Main extends Application {
     }
     @Override
     public void start(Stage stage) throws Exception {
-        //TODO add events to this.  make them publicly accessable
         instance = this;
         scenes = new HashMap<>();
         this.stage = stage;
@@ -32,6 +35,8 @@ public class Main extends Application {
         scenes.put("Messaging Window",messageWindow);
         scenes.put("Login",loginWindow);
         activate("Login");
+
+        eventNode = new EventNode();
     }
 
     public Window getCurrentWindow(){

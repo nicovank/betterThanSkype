@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class MessagingController implements IMessage, ILeaveRoom,IUserUpdate {
+public class MessagingController implements IMessage, ILeaveRoom, IUserEnter,IUserLeave {
     private String username;
     @FXML
     private TextArea textBox;
@@ -84,12 +84,12 @@ public class MessagingController implements IMessage, ILeaveRoom,IUserUpdate {
     }
 
     @Override
-    public void UserJoinedRoom(UserJoinedEvent e) {
+    public void userJoinedRoom(UserJoinedEvent e) {
         memberList.getChildren().add(new Label(e.getUsername()));
     }
 
     @Override
-    public void UserLeftRoom(UserLeftEvent e) {
+    public void userLeftRoom(UserLeftEvent e) {
         memberList.getChildren().removeIf(t->{
             if( t instanceof Label){
                 Label tt = (Label)t;
