@@ -4,6 +4,7 @@ import utils.Constants;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 public class MessagePacket extends Packet {
     public String getNickName() {
@@ -34,7 +35,7 @@ public class MessagePacket extends Packet {
         }
 
         byte nlength = buff.get();
-        if (nlength <= 0 || nlength > 32 || nlength > buff.remaining() - 12) {
+        if (nlength <= 0 || nlength > 32) {
             throw new InvalidPacketFormatException("Received invalid MESSAGE packet.");
         }
 
@@ -42,7 +43,7 @@ public class MessagePacket extends Packet {
         buff.get(name);
 
         int mlength = buff.getInt();
-        if(mlength <=0 || mlength > 900 || mlength > buff.remaining() -8 ){
+        if(mlength <=0 || mlength > 900){
             throw new InvalidPacketFormatException("Received invalid MESSAGE packet.");
 
         }
@@ -64,7 +65,7 @@ public class MessagePacket extends Packet {
 
         buff.put((byte) name.length);
         buff.put(name);
-        buff.put((byte) message.length);
+        buff.putInt(message.length);
         buff.put(message);
         buff.putLong(timestamp);
         return buff.array();
@@ -73,6 +74,17 @@ public class MessagePacket extends Packet {
     @Override
     public byte getOperationCode() {
         return Constants.OPCODE.MESSAGE;
+    }
+    @Override
+    public int hashCode() {
+        return Objects.hash(nickName, message,timestamp);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (!(other instanceof MessagePacket)) return false;
+        MessagePacket o = (MessagePacket) other;
+        return o.nickName.equals(this.nickName) && o.message.equals(this.message) && o.timestamp==this.timestamp;
     }
 }
 /*
