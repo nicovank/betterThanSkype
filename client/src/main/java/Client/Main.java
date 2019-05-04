@@ -2,10 +2,15 @@ package Client;
 
 import Client.Controllers.LoginController;
 import Client.Controllers.MessagingController;
+import Client.Events.EventNode;
+import Client.Events.MessageReceivedEvent;
+import Client.Events.UserJoinedEvent;
+import Client.Events.UserLeftEvent;
 import javafx.application.Application;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.stage.Stage;
-
 import java.util.HashMap;
 
 public class Main extends Application {
@@ -13,10 +18,11 @@ public class Main extends Application {
     private Stage stage;
     private Window window;
     private static Main instance;
+    private Node eventNode;
+
     public static Main getInstance(){
         return instance;
     }
-
     public static void main(String[] args) {
         launch(args);
     }
@@ -32,6 +38,15 @@ public class Main extends Application {
         scenes.put("Messaging Window",messageWindow);
         scenes.put("Login",loginWindow);
         activate("Login");
+
+        eventNode = new EventNode();
+        eventNode.addEventHandler(MessageReceivedEvent.MESSAGE_EVENT, messageReceivedEvent -> messageWindow.getController().receiveMessage(messageReceivedEvent));
+        eventNode.addEventHandler(UserJoinedEvent.JOIN_EVENT, joinEvent -> messageWindow.getController().userJoinedRoom(joinEvent));
+        eventNode.addEventHandler(UserLeftEvent.LEAVE_EVENT, leftEvent -> messageWindow.getController().userLeftRoom(leftEvent));
+    }
+
+    public Node getEventNode() {
+        return eventNode;
     }
 
     public Window getCurrentWindow(){

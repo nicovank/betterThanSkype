@@ -6,6 +6,11 @@ public final class Constants {
 
     public static final int PACKET_HANDLER_THREADS = 1;
 
+    public static final class PORTS{
+        private PORTS(){}
+        public static final int CLIENT = 2697;
+        public static final int SERVER = 3697;
+    }
     public static final class ENCRYPTION {
         public static final byte UNENCRYPTED = 0;
         public static final byte RSA = 1;

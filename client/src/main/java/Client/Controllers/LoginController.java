@@ -1,13 +1,16 @@
 package Client.Controllers;
 
-import Client.IEnterRoom;
 import Client.Main;
+import Client.Sockets.IRoomSocket;
+import Client.Sockets.RoomSocket;
+import crypto.CryptoException;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 
+import java.io.IOException;
 
 public class LoginController implements IEnterRoom {
     @FXML
@@ -17,6 +20,12 @@ public class LoginController implements IEnterRoom {
     @FXML
     private PasswordField passwordField;
 
+    private IRoomSocket roomSocket;
+
+    public LoginController() throws IOException, CryptoException {
+        roomSocket = new RoomSocket();
+    }
+    //TODO finish implementation of the events
     @Override
     public boolean requestNewRoom(String nickname, String roomID, String password) {
         return false;
@@ -34,14 +43,25 @@ public class LoginController implements IEnterRoom {
 
     @FXML
     private void onCreateRoom(MouseEvent e){
-        System.out.println("Create Room");
-        System.out.println("Primary Click");
         if(hasCorrectInput()){
-            System.out.println("Moving Scene");
-            Main.getInstance().activate("Messaging Window");
-            MessagingController messagingController = (MessagingController)Main.getInstance().getCurrentWindow().getController();
-            messagingController.initializeChatRoom(nicknameField.getText(),roomNameLabel.getText());
+            //create room
+            moveScene();
         }
+    }
+
+    @FXML
+    private void onJoinRoom(MouseEvent e){
+        if(hasCorrectInput()){
+            //and authentication for room
+            moveScene();
+        }
+    }
+
+    private void moveScene(){
+        System.out.println("Moving Scene");
+        Main.getInstance().activate("Messaging Window");
+        MessagingController messagingController = (MessagingController)Main.getInstance().getCurrentWindow().getController();
+        messagingController.initializeChatRoom(nicknameField.getText(),roomNameLabel.getText(),passwordField.getText(),roomSocket);
     }
 
     private boolean hasCorrectInput(){
