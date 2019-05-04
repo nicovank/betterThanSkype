@@ -33,7 +33,7 @@ public final class PublicKeyPacket extends Packet {
 
     @Override
     public byte getOperationCode() {
-        return Constants.OPCODE.PUB;
+        return Constants.OPCODE.PUBRET;
     }
 
     public static PublicKeyPacket parse(byte[] data) throws InvalidPacketFormatException {

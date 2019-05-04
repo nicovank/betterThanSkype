@@ -1,7 +1,10 @@
 package Client.Controllers;
 
-import Client.ILeaveRoom;
-import Client.IMessage;
+import Client.Events.Message;
+import Client.Events.MessageReceivedEvent;
+import Client.Events.UserJoinedEvent;
+import Client.Events.UserLeftEvent;
+import Client.Sockets.IRoomSocket;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
@@ -9,10 +12,12 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
-
-public class MessagingController implements IMessage, ILeaveRoom {
-    private String userName;
+public class MessagingController implements IMessage, ILeaveRoom, IUserEnter,IUserLeave {
+    private String username;
     @FXML
     private TextArea textBox;
     @FXML
@@ -21,45 +26,77 @@ public class MessagingController implements IMessage, ILeaveRoom {
     private Label roomName;
     @FXML
     private VBox memberList;
+    private List<Message> messages = new ArrayList<>();
+    private IRoomSocket roomSocket;
+
+    private String password;
+
     @Override
-    public boolean leaveRoom(String nickname, String roomID, String password) {
-        return false;
+    public void leaveRoom(String nickname, String roomID, String password) {
+        roomSocket.sendLeavingMessage(nickname);
     }
 
     @Override
-    public boolean sendMessage(String message) {
-        return false;
+    public void sendMessage(String message) {
+        roomSocket.sendToEveryone(message,password); //message
     }
 
     @Override
-    public String receiveMessage() {
-        return null;
+    public void receiveMessage(MessageReceivedEvent event) {
+        Message message = event.getMessage();
+        messages.add(message);
+        messages = messages.parallelStream().sorted().collect(Collectors.toList());
+        chatBox.getChildren().clear();
+        messages.forEach(m-> chatBox.getChildren().add(new Label(m.getFullText())));
     }
 
-    void initializeChatRoom(String userName,String roomName){
-        this.userName = userName;
+    void initializeChatRoom(String username, String roomName, String password, IRoomSocket s){
+        roomSocket = s;
+        this.username = username;
         this.roomName.setText(roomName);
-        memberList.getChildren().add(new Label(userName)); //when video/audio gets added this will need changing
+        this.password = password;
+        memberList.getChildren().add(new Label(username)); //when video/audio gets added this will need changing
     }
 
     @FXML
     public void onEnter(KeyEvent e){
-
         if(e.getCode() == KeyCode.ENTER) {
-            addMessageToChat(userName,textBox.getText());
-            textBox.clear();
+            addLocalMessage();
         }
     }
 
     @FXML
     public void onSubmit(MouseEvent e){
+        addLocalMessage();
+    }
+
+    private void addLocalMessage(){
         String message = textBox.getText().replace("\n","");
-        addMessageToChat(userName, message);
+        long timeStamp = roomSocket.sendToEveryone(message,password);
+        Message m = new Message(message, username,timeStamp);
+        messages.add(m);
+        addMessageToChat(m);
         textBox.clear();
     }
 
-    private void addMessageToChat(String userName,String message) {
-        chatBox.getChildren().add(new Label(userName+" says: \"" +message+"\""));
+    private void addMessageToChat(Message message) {
+        chatBox.getChildren().add(new Label(message.getFullText()));
+    }
 
+    @Override
+    public void userJoinedRoom(UserJoinedEvent e) {
+        memberList.getChildren().add(new Label(e.getUsername()));
+    }
+
+    @Override
+    public void userLeftRoom(UserLeftEvent e) {
+        memberList.getChildren().removeIf(t->{
+            if( t instanceof Label){
+                Label tt = (Label)t;
+                String text = tt.getText();
+                return text.equals(e.getUsername());
+            }
+            return false;
+        });
     }
 }
