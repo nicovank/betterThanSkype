@@ -25,7 +25,7 @@ public class LoginController implements IEnterRoom {
     public LoginController() throws IOException, CryptoException {
         roomSocket = new RoomSocket();
     }
-
+    //TODO finish implementation of the events
     @Override
     public boolean requestNewRoom(String nickname, String roomID, String password) {
         return false;

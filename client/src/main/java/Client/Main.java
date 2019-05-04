@@ -4,7 +4,10 @@ import Client.Controllers.LoginController;
 import Client.Controllers.MessagingController;
 import Client.Events.EventNode;
 import Client.Events.MessageReceivedEvent;
+import Client.Events.UserJoinedEvent;
+import Client.Events.UserLeftEvent;
 import javafx.application.Application;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.stage.Stage;
@@ -37,6 +40,13 @@ public class Main extends Application {
         activate("Login");
 
         eventNode = new EventNode();
+        eventNode.addEventHandler(MessageReceivedEvent.MESSAGE_EVENT, messageReceivedEvent -> messageWindow.getController().receiveMessage(messageReceivedEvent));
+        eventNode.addEventHandler(UserJoinedEvent.JOIN_EVENT, joinEvent -> messageWindow.getController().userJoinedRoom(joinEvent));
+        eventNode.addEventHandler(UserLeftEvent.LEAVE_EVENT, leftEvent -> messageWindow.getController().userLeftRoom(leftEvent));
+    }
+
+    public Node getEventNode() {
+        return eventNode;
     }
 
     public Window getCurrentWindow(){

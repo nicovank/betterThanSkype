@@ -1,5 +1,10 @@
 package Client.Sockets;
 
+import Client.Events.Message;
+import Client.Events.MessageReceivedEvent;
+import Client.Events.UserJoinedEvent;
+import Client.Events.UserLeftEvent;
+import Client.Main;
 import crypto.CryptoException;
 import crypto.RSA;
 import packets.*;
@@ -43,7 +48,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
 
         SERVER_SOCKET.send(sendPacket);
 
-        //Get ack and key from server
+        //Get ack and key from server //TODO make sure this ALWAYS works
         DatagramPacket receivePacket = new DatagramPacket(bytes,bytes.length);
         SERVER_SOCKET.receive(receivePacket);
         PublicKeyPacket pkPacket = new PublicKeyPacket(receivePacket.getData());
@@ -168,15 +173,16 @@ public class RoomSocket implements IRoomSocket,Runnable{
     }
 
     private void handleMessage(MessagePacket packet){
-        TIME_STAMP.getAndIncrement();
+
         MessageAckPacket ackPacket = packet.createAck();
         IO_QUEUE.offer(ackPacket.getDatagramPacket());
 
         //resolve timeStamp
+        long timestamp = Math.max(TIME_STAMP.getAndIncrement(),packet.getTimestamp());
 
         //create message
-
-        //TODO create event for Controllers to listen to
+        Message m = new Message(packet.getMessage(),packet.getNickName(),timestamp);
+        Main.getInstance().getEventNode().fireEvent(new MessageReceivedEvent(MessageReceivedEvent.MESSAGE_EVENT,m));
     }
 
     private void handleMessageAck(MessageAckPacket packet){
@@ -253,13 +259,15 @@ public class RoomSocket implements IRoomSocket,Runnable{
 
     @Override
     public void addToSendList(String nickName, Address address) {
-        //TODO implement
+        //TODO implement still needs to persist username/addresses
         TIME_STAMP.getAndIncrement();
+        Main.getInstance().getEventNode().fireEvent(new UserJoinedEvent(UserJoinedEvent.JOIN_EVENT,nickName));
     }
 
     @Override
     public void removeFromSendList(String nickName) {
-        //TODO implement
+        //TODO implement still needs to persist username/addresses
         TIME_STAMP.getAndIncrement();
+        Main.getInstance().getEventNode().fireEvent(new UserLeftEvent(UserLeftEvent.LEAVE_EVENT,nickName));
     }
 }
