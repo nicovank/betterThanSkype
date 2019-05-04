@@ -1,7 +1,7 @@
 package Client.Controllers;
 
 import Client.Main;
-import Client.Sockets.RoomSocket;
+import Client.Sockets.IRoomSocket;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.PasswordField;
@@ -16,7 +16,7 @@ public class LoginController implements IEnterRoom {
     @FXML
     private PasswordField passwordField;
 
-    private RoomSocket roomSocket;
+    private IRoomSocket roomSocket;
 
     @Override
     public boolean requestNewRoom(String nickname, String roomID, String password) {
