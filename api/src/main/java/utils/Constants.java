@@ -6,6 +6,11 @@ public final class Constants {
 
     public static final int PACKET_HANDLER_THREADS = 1;
 
+    public static final class PORTS{
+        private PORTS(){}
+        public static final int CLIENT = 2697;
+        public static final int SERVER = 3697;
+    }
     public static final class ENCRYPTION {
         public static final byte UNENCRYPTED = 0;
         public static final byte RSA = 1;
@@ -17,15 +22,25 @@ public final class Constants {
     }
 
     public static final class OPCODE {
-        public static final byte PUBREQ = 2;
-        public static final byte PUB = 17;
-        public static final byte CREATEROOM = 31;
-        public static final byte CRSUC = 71;
-        public static final byte ERROR = 5;
-        public static final byte JOINREQ = 11;
-        public static final byte JOINSUC = 23;
-        public static final byte ANNOUNCE = 103;
-        public static final byte ANNACK = 107;
+        public static final byte PUBREQ = 0;
+        public static final byte PUBRET = 1;
+        public static final byte CREATEROOM = 2;
+        public static final byte JOINREQ = 3;
+        public static final byte CRSUC = 4;
+        public static final byte JOINSUC = 5;
+        public static final byte LEAVEROOM = 6;
+        public static final byte ERROR = 7;
+        public static final byte ANNOUNCE = 8;
+        public static final byte ANNACK = 9;
+        public static final byte ANNACKACK = 10;
+        public static final byte MESSAGE = 12;
+        public static final byte MESSAGEACK = 13;
+        public static final byte KEEPALIVE = 14;
+        public static final byte KEEPALIVEACK = 15;
+
+
+
+
 
         private OPCODE() {
 

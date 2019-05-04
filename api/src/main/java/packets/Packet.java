@@ -77,7 +77,7 @@ public abstract class Packet {
                 return ErrorPacket.parse(packet);
             case Constants.OPCODE.PUBREQ:
                 return PublicKeyRequestPacket.parse(packet);
-            case Constants.OPCODE.PUB:
+            case Constants.OPCODE.PUBRET:
                 return PublicKeyPacket.parse(packet);
             case Constants.OPCODE.CREATEROOM:
                 return RoomCreationRequestPacket.parse(packet);

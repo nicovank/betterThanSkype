@@ -1,5 +1,0 @@
-rootProject.name = 'betterthanskype'
-include 'api'
-include 'client'
-include 'server'
-
