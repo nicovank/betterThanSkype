@@ -53,7 +53,7 @@ public class LoginController implements IEnterRoom {
         System.out.println("Moving Scene");
         Main.getInstance().activate("Messaging Window");
         MessagingController messagingController = (MessagingController)Main.getInstance().getCurrentWindow().getController();
-        messagingController.initializeChatRoom(nicknameField.getText(),roomNameLabel.getText(),roomSocket);
+        messagingController.initializeChatRoom(nicknameField.getText(),roomNameLabel.getText(),passwordField.getText(),roomSocket);
     }
 
     private boolean hasCorrectInput(){

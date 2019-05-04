@@ -1,6 +1,8 @@
 package Client.Controllers;
 
+import Client.Events.MessageReceivedEvent;
+
 public interface IMessage {
-    boolean sendMessage(String message);
-    void receiveMessage();
+    void sendMessage(String message);
+    void receiveMessage(MessageReceivedEvent event);
 }

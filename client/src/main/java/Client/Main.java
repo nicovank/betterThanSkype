@@ -21,6 +21,7 @@ public class Main extends Application {
     }
     @Override
     public void start(Stage stage) throws Exception {
+        //TODO add events to this.  make them publicly accessable
         instance = this;
         scenes = new HashMap<>();
         this.stage = stage;

@@ -1,4 +1,4 @@
-package Client.Connectables;
+package Client.Events;
 
 public final class Message implements Comparable<Message> {
     private final String text;

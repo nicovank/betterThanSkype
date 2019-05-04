@@ -228,14 +228,27 @@ public class RoomSocket implements IRoomSocket,Runnable{
     }
 
     @Override
-    public void sendToEveryone(String message, String password) {
-
+    public long sendToEveryone(String message, String password) {
         MessagePacket messagePacket = new MessagePacket(message,password,Constants.TYPE.UNICAST);
         DatagramPacket packet = messagePacket.getDatagramPacket();
         packet.setPort(Constants.PORTS.CLIENT);
         //packet.setAddress("0.0.0.0"); //TODO get MULTICAST IP if needed.
         IO_QUEUE.offer(messagePacket.getDatagramPacket());
-        TIME_STAMP.getAndIncrement();
+        return TIME_STAMP.getAndIncrement();
+    }
+
+    @Override
+    public void sendLeavingMessage(String username) {
+        LeaveRoomPacket packet = new LeaveRoomPacket(username);
+        DatagramPacket clientPacket = packet.getDatagramPacket();
+        LeaveRoomPacket packet2 = new LeaveRoomPacket(username);
+        DatagramPacket serverPacket = packet2.getDatagramPacket();
+        clientPacket.setPort(Constants.PORTS.CLIENT);
+        //TODO client address?
+        IO_QUEUE.offer(clientPacket);
+        serverPacket.setPort(Constants.PORTS.SERVER);
+        serverPacket.setAddress(SERVER_ADDRESS);
+        IO_QUEUE.offer(serverPacket);
     }
 
     @Override
