@@ -120,31 +120,90 @@ public class RoomSocket implements IRoomSocket,Runnable{
         //handle all packets a client should be expected to receive
         switch (packet.getOperationCode()) {
             case Constants.OPCODE.ANNOUNCE:
-                //TODO handle announcement
+                handleAnnouncement((AnnouncePacket) packet);
                 break;
             case Constants.OPCODE.ANNACK:
-                //TODO handle announcementACK
+                handleAnnouncementAck((AnnounceAckPacket) packet);
                 break;
             case Constants.OPCODE.ANNACKACK:
-                //TODO handle ackack
+                handleAnnouncementAckAck((AnnounceAckAckPacket) packet);
                 break;
             case Constants.OPCODE.MESSAGE:
-                //TODO handle incoming message
+                handleMessage((MessagePacket) packet);
                 break;
             case Constants.OPCODE.MESSAGEACK:
-                //TODO handle ack for our message
+                handleMessageAck((MessageAckPacket)packet);
                 break;
             case Constants.OPCODE.LEAVEROOM:
-                //TODO handle leave room message
+                handleLeaveRoom((LeaveRoomPacket) packet);
                 break;
             case Constants.OPCODE.KEEPALIVE:
-                //TODO handle keep alive
+                handleKeepAlive((KeepAlivePacket) packet);
                 break;
             case Constants.OPCODE.KEEPALIVEACK:
-                //TODO handle ack for keep alive.
+                handleKeepAliveAck((KeepAliveAckPacket) packet);
                 break;
         }
     }
+
+    private void handleAnnouncement(AnnouncePacket packet){
+        TIME_STAMP.getAndIncrement();
+        AnnounceAckPacket ackPacket = packet.createAck(TIME_STAMP.get());
+        IO_QUEUE.offer(ackPacket.getDatagramPacket());
+        String username = ackPacket.getNickName();
+
+        //TODO create event for Controllers to listen to
+    }
+
+    private void handleAnnouncementAck(AnnounceAckPacket packet){
+        TIME_STAMP.getAndIncrement();
+        AnnounceAckAckPacket ackPacket = new AnnounceAckAckPacket();//TODO ackPacket should create its own ack packet
+        IO_QUEUE.offer(ackPacket.getDatagramPacket());
+    }
+
+    private void handleAnnouncementAckAck(AnnounceAckAckPacket packet) {
+        TIME_STAMP.getAndIncrement();
+
+        //TODO nothing?
+    }
+
+    private void handleMessage(MessagePacket packet){
+        TIME_STAMP.getAndIncrement();
+        MessageAckPacket ackPacket = packet.createAck();
+        IO_QUEUE.offer(ackPacket.getDatagramPacket());
+
+        //resolve timeStamp
+
+        //create message
+
+        //TODO create event for Controllers to listen to
+    }
+
+    private void handleMessageAck(MessageAckPacket packet){
+        TIME_STAMP.getAndIncrement();
+
+        //TODO nothing?
+    }
+
+    private void handleLeaveRoom(LeaveRoomPacket packet){
+        TIME_STAMP.getAndIncrement();
+
+        //TODO create event for Controller to listen to
+    }
+
+    private void handleKeepAlive(KeepAlivePacket packet){
+        TIME_STAMP.getAndIncrement();
+        KeepAliveAckPacket ackPacket = new KeepAliveAckPacket();
+        IO_QUEUE.offer(ackPacket.getDatagramPacket());
+
+        //TODO handle logistics for this
+    }
+    private void handleKeepAliveAck(KeepAliveAckPacket packet){
+        TIME_STAMP.getAndIncrement();
+
+        //TODO nothing?
+    }
+
     //IMPORTANT ALL OF THESE MESSAGES SHOULD END WITH SENDING A PACKET TO IOQUEUE AND INCREMENTING TIME_STAMP
     @Override
     public void attemptToCreateRoom(String room, String username, String password) {
