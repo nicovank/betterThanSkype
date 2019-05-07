@@ -7,28 +7,41 @@ import java.nio.charset.StandardCharsets;
 
 public class LeaveRoomPacket extends Packet {
     private final String nickname;
+    private final String roomname;
 
-    public LeaveRoomPacket(String nickname) {
+    public LeaveRoomPacket(String nickname, String roomname) {
         this.nickname = nickname;
+        this.roomname = roomname;
     }
 
     public static LeaveRoomPacket parse(byte[] data) throws InvalidPacketFormatException{
         ByteBuffer buff = ByteBuffer.wrap(data);
+
         byte nlength = buff.get();
         if (buff.remaining()<1){
             throw new InvalidPacketFormatException("Received invalid LEAVEROOM packet");
         }
-        byte[] name = new byte[nlength];
-        buff.get(name);
-        return new LeaveRoomPacket(new String(name, StandardCharsets.UTF_8));
+        byte[] nickname = new byte[nlength];
+        buff.get(nickname);
+
+        byte rnlength = buff.get();
+        byte[] roomname = new byte[rnlength];
+        buff.get(roomname);
+
+        return new LeaveRoomPacket(new String(nickname, StandardCharsets.UTF_8),
+                                   new String(roomname, StandardCharsets.UTF_8));
     }
+
     @Override
     byte[] serialize() {
-        byte[] name = nickname.getBytes(StandardCharsets.UTF_8);
-        ByteBuffer buff = ByteBuffer.allocate(name.length+1);
+        byte[] nickname = this.nickname.getBytes(StandardCharsets.UTF_8);
+        byte[] roomname = this.roomname.getBytes(StandardCharsets.UTF_8);
+        ByteBuffer buff = ByteBuffer.allocate(roomname.length + nickname.length + 2);
 
-        buff.put((byte) name.length);
-        buff.put(name);
+        buff.put((byte) nickname.length);
+        buff.put(nickname);
+        buff.put((byte) roomname.length);
+        buff.put(roomname);
         return buff.array();
     }
 
