@@ -3,9 +3,11 @@ package packets;
 import crypto.AES;
 import crypto.CryptoException;
 import crypto.RSA;
+import utils.Address;
 import utils.Constants;
 
 import java.net.DatagramPacket;
+import java.net.InetAddress;
 import java.security.PublicKey;
 import java.util.Arrays;
 
@@ -75,9 +77,7 @@ public abstract class Packet {
                 return SuccessfulRoomCreationPacket.parse(packet);
             case Constants.OPCODE.ERROR:
                 return ErrorPacket.parse(packet);
-            case Constants.OPCODE.PUBREQ:
-                return PublicKeyRequestPacket.parse(packet);
-            case Constants.OPCODE.PUBRET:
+            case Constants.OPCODE.PUB:
                 return PublicKeyPacket.parse(packet);
             case Constants.OPCODE.CREATEROOM:
                 return RoomCreationRequestPacket.parse(packet);
@@ -99,7 +99,7 @@ public abstract class Packet {
      * @return a DatagramPacket representation of the packet, encrypted using RSA.
      * @throws CryptoException if there was any issues during the encryption process.
      */
-    public DatagramPacket getDatagramPacket(PublicKey pub) throws CryptoException {
+    public DatagramPacket getDatagramPacket(InetAddress address, int port, PublicKey pub) throws CryptoException {
         byte[] data = serialize();
 
         byte[] prefixed = new byte[data.length + 1];
@@ -111,7 +111,11 @@ public abstract class Packet {
         packet[0] = Constants.ENCRYPTION.RSA;
         System.arraycopy(encrypted, 0, packet, 1, encrypted.length);
 
-        return new DatagramPacket(packet, packet.length);
+        return new DatagramPacket(packet, packet.length, address, port);
+    }
+
+    public DatagramPacket getDatagramPacket(Address address, PublicKey pub) throws CryptoException {
+        return getDatagramPacket(address.getAddress(), address.getPort(), pub);
     }
 
     /**
@@ -121,7 +125,7 @@ public abstract class Packet {
      * @return a DatagramPacket representation of the packet, encrypted using AES.
      * @throws CryptoException if there was any issues during the encryption process.
      */
-    public DatagramPacket getDatagramPacket(AES aes) throws CryptoException {
+    public DatagramPacket getDatagramPacket(InetAddress address, int port, AES aes) throws CryptoException {
         byte[] data = serialize();
 
         byte[] prefixed = new byte[data.length + 1];
@@ -133,7 +137,11 @@ public abstract class Packet {
         packet[0] = Constants.ENCRYPTION.AES;
         System.arraycopy(encrypted, 0, packet, 1, encrypted.length);
 
-        return new DatagramPacket(packet, packet.length);
+        return new DatagramPacket(packet, packet.length, address, port);
+    }
+
+    public DatagramPacket getDatagramPacket(Address address, AES aes) throws CryptoException {
+        return getDatagramPacket(address.getAddress(), address.getPort(), aes);
     }
 
     /**
@@ -142,13 +150,17 @@ public abstract class Packet {
      *
      * @return a DatagramPacket representation of the packet, with unencrypted data.
      */
-    public DatagramPacket getDatagramPacket() {
+    public DatagramPacket getDatagramPacket(InetAddress address, int port) {
         byte[] data = serialize();
         byte[] packet = new byte[data.length + 2];
         packet[0] = Constants.ENCRYPTION.UNENCRYPTED;
         packet[1] = this.getOperationCode();
         System.arraycopy(data, 0, packet, 2, data.length);
-        return new DatagramPacket(packet, packet.length);
+        return new DatagramPacket(packet, packet.length, address, port);
+    }
+
+    public DatagramPacket getDatagramPacket(Address address) {
+        return getDatagramPacket(address.getAddress(), address.getPort());
     }
 
     abstract byte[] serialize();
