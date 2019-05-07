@@ -1,8 +1,12 @@
 package Client.Controllers;
 
+import Client.Events.RoomResponseEvent;
+import javafx.scene.input.MouseEvent;
+
 public interface IEnterRoom {
 
-    boolean requestNewRoom(String nickname, String roomID, String password);
-    boolean requestToJoinRoom(String nickname, String roomID, String password);
-    boolean receiveRoomData();
+    void onCreateRoom(MouseEvent e);
+    void onJoinRoom(MouseEvent e);
+    void onNewRoomResponse(RoomResponseEvent e);
+    void onJoinRoomResponse(RoomResponseEvent e);
 }
