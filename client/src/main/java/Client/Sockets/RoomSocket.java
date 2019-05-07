@@ -45,7 +45,6 @@ public class RoomSocket implements IRoomSocket,Runnable{
         DatagramPacket sendPacket = prPacket.getDatagramPacket();
         sendPacket.setAddress(SERVER_ADDRESS);
         sendPacket.setPort(Constants.PORTS.SERVER);
-
         SERVER_SOCKET.send(sendPacket);
 
         //Get ack and key from server //TODO make sure this ALWAYS works
@@ -56,8 +55,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
 
         //concurrency setup
         IO_QUEUE = new ConcurrentLinkedQueue<>();
-        TIME_STAMP = new AtomicLong();
-        TIME_STAMP.lazySet(0);
+        TIME_STAMP = new AtomicLong(0);
     }
 
     public void run() {
@@ -164,12 +162,13 @@ public class RoomSocket implements IRoomSocket,Runnable{
         TIME_STAMP.getAndIncrement();
         AnnounceAckAckPacket ackPacket = new AnnounceAckAckPacket();//TODO ackPacket should create its own ack packet
         IO_QUEUE.offer(ackPacket.getDatagramPacket());
+        //TODO handle not receiving packet for a long time needing a resend.
     }
 
     private void handleAnnouncementAckAck(AnnounceAckAckPacket packet) {
         TIME_STAMP.getAndIncrement();
 
-        //TODO nothing?
+        //TODO nothing? terminate waiting condition for handleAnnouncementAck
     }
 
     private void handleMessage(MessagePacket packet){
@@ -183,12 +182,14 @@ public class RoomSocket implements IRoomSocket,Runnable{
         //create message
         Message m = new Message(packet.getMessage(),packet.getNickName(),timestamp);
         Main.getInstance().getEventNode().fireEvent(new MessageReceivedEvent(MessageReceivedEvent.MESSAGE_EVENT,m));
+
+        //TODO timer if ack isn't received fast enough.
     }
 
     private void handleMessageAck(MessageAckPacket packet){
         TIME_STAMP.getAndIncrement();
 
-        //TODO nothing?
+        //TODO nothing? break timer for ack packet.
     }
 
     private void handleLeaveRoom(LeaveRoomPacket packet){
