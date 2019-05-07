@@ -22,8 +22,7 @@ public final class Constants {
     }
 
     public static final class OPCODE {
-        public static final byte PUBREQ = 0;
-        public static final byte PUBRET = 1;
+        public static final byte PUB = 1;
         public static final byte CREATEROOM = 2;
         public static final byte JOINREQ = 3;
         public static final byte CRSUC = 4;
