@@ -31,18 +31,18 @@ public abstract class Packet {
                 if (aes == null) {
                     throw new CryptoException("Received an AES-encrypted packet, while the AES key was not provided for decryption.");
                 }
-                return parse(aes.decrypt(Arrays.copyOfRange(data, 1, data.length)));
+                return parseData(aes.decrypt(Arrays.copyOfRange(data, 1, data.length)));
             }
 
             if (data[0] == Constants.ENCRYPTION.RSA) {
                 if (rsa == null) {
                     throw new CryptoException("Received an RSA-encrypted packet, while the RSA key was not provided for decryption.");
                 }
-                return parse(rsa.decrypt(Arrays.copyOfRange(data, 1, data.length)));
+                return parseData(rsa.decrypt(Arrays.copyOfRange(data, 1, data.length)));
             }
 
             if (data[0] == Constants.ENCRYPTION.UNENCRYPTED) {
-                return parse(Arrays.copyOfRange(data, 1, data.length));
+                return parseData(Arrays.copyOfRange(data, 1, data.length));
             }
 
             throw new InvalidPacketFormatException("Received packet encrypted using unknown algorithm.");
@@ -57,6 +57,10 @@ public abstract class Packet {
         return parse(data, aes, null);
     }
 
+    public static Packet parse(byte[] data) throws InvalidPacketFormatException, CryptoException {
+        return parse(data, null, null);
+    }
+
     /**
      * Parses the given data, assuming it has already been decrypted.
      *
@@ -64,7 +68,7 @@ public abstract class Packet {
      * @return a Packet representation of the data.
      * @throws InvalidPacketFormatException if the packet does not follow a known packet structure.
      */
-    public static Packet parse(byte[] data) throws InvalidPacketFormatException {
+    private static Packet parseData(byte[] data) throws InvalidPacketFormatException {
 
         if (data.length == 0) {
             throw new InvalidPacketFormatException("Received an empty packet with no operation code.");
