@@ -6,7 +6,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
-public class RoomCreationRequestPacket extends Packet {
+public class JoinRoomPacket extends Packet {
 
     private final String userName;
     private final String roomName;
@@ -27,14 +27,14 @@ public class RoomCreationRequestPacket extends Packet {
         return type;
     }
 
-    public RoomCreationRequestPacket(String userName, String roomName, String password, byte type) {
+    public JoinRoomPacket(String userName, String roomName, String password, byte type) {
         this.userName = userName;
         this.roomName = roomName;
         this.password = password;
         this.type = type;
     }
 
-    public static RoomCreationRequestPacket parse(byte[] data) throws InvalidPacketFormatException {
+    public static JoinRoomPacket parse(byte[] data) throws InvalidPacketFormatException {
         ByteBuffer buffer = ByteBuffer.wrap(data);
         if (buffer.remaining() < 8) {
             throw new InvalidPacketFormatException("Received invalid CREATEROOM packet.");
@@ -66,7 +66,7 @@ public class RoomCreationRequestPacket extends Packet {
 
         byte type = buffer.get();
 
-        return new RoomCreationRequestPacket(
+        return new JoinRoomPacket(
                 new String(userName, StandardCharsets.UTF_8),
                 new String(roomName, StandardCharsets.UTF_8),
                 new String(password, StandardCharsets.UTF_8),
@@ -95,7 +95,7 @@ public class RoomCreationRequestPacket extends Packet {
 
     @Override
     public byte getOperationCode() {
-        return Constants.OPCODE.CREATEROOM;
+        return Constants.OPCODE.JOINREQ;
     }
 
     @Override
@@ -105,8 +105,8 @@ public class RoomCreationRequestPacket extends Packet {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof RoomCreationRequestPacket)) return false;
-        RoomCreationRequestPacket o = (RoomCreationRequestPacket) other;
+        if (!(other instanceof JoinRoomPacket)) return false;
+        JoinRoomPacket o = (JoinRoomPacket) other;
         return o.userName.equals(this.userName)
                 && o.roomName.equals(this.roomName)
                 && o.password.equals(this.password)
