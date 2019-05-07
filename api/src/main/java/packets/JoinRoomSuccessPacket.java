@@ -6,9 +6,8 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
-public final class SuccessfulRoomCreationPacket extends Packet {
+public final class JoinRoomSuccessPacket extends Packet {
 
     private final String name;
     private final String password;
@@ -16,7 +15,7 @@ public final class SuccessfulRoomCreationPacket extends Packet {
     private final int port;
     private final byte type;
 
-    public SuccessfulRoomCreationPacket(String name, String password, InetAddress ip, int port, byte type) {
+    public JoinRoomSuccessPacket(String name, String password, InetAddress ip, int port, byte type) {
         this.name = name;
         this.password = password;
         this.ip = ip;
@@ -36,13 +35,11 @@ public final class SuccessfulRoomCreationPacket extends Packet {
         return ip;
     }
 
-    public int getPort() {
-        return port;
-    }
+    public int getPort() { return port; }
 
     public byte getType() { return type; }
 
-    public static SuccessfulRoomCreationPacket parse(byte[] data) throws InvalidPacketFormatException {
+    public static JoinRoomSuccessPacket parse(byte[] data) throws InvalidPacketFormatException {
         ByteBuffer buff = ByteBuffer.wrap(data);
 
         if (data.length == 0) {
@@ -75,7 +72,7 @@ public final class SuccessfulRoomCreationPacket extends Packet {
         byte type = buff.get();
 
         try {
-            return new SuccessfulRoomCreationPacket(
+            return new JoinRoomSuccessPacket(
                     new String(name, StandardCharsets.UTF_8),
                     new String(password, StandardCharsets.UTF_8),
                     InetAddress.getByAddress(ip),
@@ -109,7 +106,7 @@ public final class SuccessfulRoomCreationPacket extends Packet {
 
     @Override
     public byte getOperationCode() {
-        return Constants.OPCODE.CRSUC;
+        return Constants.OPCODE.JOINSUC;
     }
 
     @Override
@@ -119,6 +116,6 @@ public final class SuccessfulRoomCreationPacket extends Packet {
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof SuccessfulRoomCreationPacket && ((SuccessfulRoomCreationPacket) other).name.equals(this.name);
+        return other instanceof JoinRoomSuccessPacket && ((JoinRoomSuccessPacket) other).name.equals(this.name);
     }
 }
