@@ -160,9 +160,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
         TIME_STAMP.getAndIncrement();
         AnnounceAckPacket ackPacket = packet.createAck(TIME_STAMP.get());
         IO_QUEUE.offer(ackPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER));
-        String username = ackPacket.getNickName();
-
-        //TODO create event for Controllers to listen to
+        Main.getInstance().getEventNode().fireEvent(new UserJoinedEvent(UserJoinedEvent.JOIN_EVENT, packet.getNickName()));
     }
 
     private void handleAnnouncementAck(AnnounceAckPacket packet){
@@ -201,8 +199,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
 
     private void handleLeaveRoom(LeaveRoomPacket packet){
         TIME_STAMP.getAndIncrement();
-
-        //TODO create event for Controller to listen to
+        Main.getInstance().getEventNode().fireEvent(new UserLeftEvent(UserLeftEvent.LEAVE_EVENT, packet.getNickname()));
     }
 
     private void handleKeepAlive(KeepAlivePacket packet){
@@ -221,7 +218,6 @@ public class RoomSocket implements IRoomSocket,Runnable{
     //IMPORTANT ALL OF THESE MESSAGES SHOULD END WITH SENDING A PACKET TO IOQUEUE AND INCREMENTING TIME_STAMP
     @Override
     public void attemptToCreateRoom(String room, String username, String password) {
-        //TODO Needs roomname.  Type?
         RoomCreationRequestPacket creationRequestPacket = new RoomCreationRequestPacket(room,username,password,Constants.TYPE.UNICAST);
         DatagramPacket packet = creationRequestPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER);
         IO_QUEUE.offer(packet);

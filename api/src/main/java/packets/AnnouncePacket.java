@@ -74,6 +74,10 @@ public class AnnouncePacket extends Packet {
         AnnouncePacket o = (AnnouncePacket) other;
         return o.nickName.equals(this.nickName) && o.password.equals(this.password);
     }
+
+    public String getNickName() {
+        return nickName;
+    }
 }
 
 
