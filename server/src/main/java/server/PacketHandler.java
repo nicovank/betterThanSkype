@@ -67,11 +67,11 @@ public final class PacketHandler extends Thread {
 
                 case Constants.OPCODE.CREATEROOM:
                     RoomCreationRequestPacket request = (RoomCreationRequestPacket) packet;
-                    if (rooms.containsKey(request.getName())) {
+                    if (rooms.containsKey(request.getRoomName())) {
                         // TODO SEND ROOM ALREADY EXISTS ERROR PACKET
                     } else {
                         Room room = new Room(); // TODO put values in the room class (notably generate random Multicast URL)
-                        rooms.put(request.getName(), room);
+                        rooms.put(request.getRoomName(), room);
                         // TODO SEND SUCCESSFUL ROOM CREATION PACKET
                     }
                     break;

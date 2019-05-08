@@ -1,9 +1,6 @@
 package Client.Sockets;
 
-import Client.Events.Message;
-import Client.Events.MessageReceivedEvent;
-import Client.Events.UserJoinedEvent;
-import Client.Events.UserLeftEvent;
+import Client.Events.*;
 import Client.Main;
 import crypto.CryptoException;
 import crypto.RSA;
@@ -13,6 +10,7 @@ import utils.Constants;
 import java.io.IOException;
 import java.net.*;
 import java.security.PublicKey;
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -25,6 +23,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
     private final PublicKey SERVER_PUBLIC_KEY;
     private final ConcurrentLinkedQueue<DatagramPacket> IO_QUEUE;
     private final AtomicLong TIME_STAMP;
+    private InetAddress currentMulticastAddress;
 
     public RoomSocket() throws IOException, CryptoException {
         //setup SERVER_SOCKET
@@ -38,26 +37,30 @@ public class RoomSocket implements IRoomSocket,Runnable{
         OUR_KEY = KEYS.getPublicKey();
 
         //inform our Server of our existence.
-        PublicKeyRequestPacket prPacket = new PublicKeyRequestPacket(OUR_KEY);
+        PublicKeyPacket prPacket = new PublicKeyPacket(OUR_KEY);
         byte[] bytes = new byte[Constants.MAX_PACKET_SIZE];
-
-        //TODO creating a data packet by address should be handled by class
-        DatagramPacket sendPacket = prPacket.getDatagramPacket();
-        sendPacket.setAddress(SERVER_ADDRESS);
-        sendPacket.setPort(Constants.PORTS.SERVER);
-
+        DatagramPacket sendPacket = prPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER);
         SERVER_SOCKET.send(sendPacket);
 
-        //Get ack and key from server //TODO make sure this ALWAYS works
-        DatagramPacket receivePacket = new DatagramPacket(bytes,bytes.length);
-        SERVER_SOCKET.receive(receivePacket);
-        PublicKeyPacket pkPacket = new PublicKeyPacket(receivePacket.getData());
-        SERVER_PUBLIC_KEY = pkPacket.getPublicKey();
+        //Get ack and key from server
+        boolean successfulServerAck = false;
+        DatagramPacket receivePacket= new DatagramPacket(bytes,bytes.length);
+        Packet p = null;
+
+        while(!successfulServerAck) {
+            SERVER_SOCKET.receive(receivePacket);
+            try {
+                p = Packet.parse(Arrays.copyOf(receivePacket.getData(), receivePacket.getLength()));
+                successfulServerAck = true;
+            } catch (InvalidPacketFormatException e) {
+                e.printStackTrace();
+            }
+        }
+        SERVER_PUBLIC_KEY = ((PublicKeyPacket) p).getPublicKey();
 
         //concurrency setup
         IO_QUEUE = new ConcurrentLinkedQueue<>();
-        TIME_STAMP = new AtomicLong();
-        TIME_STAMP.lazySet(0);
+        TIME_STAMP = new AtomicLong(0);
     }
 
     public void run() {
@@ -90,9 +93,9 @@ public class RoomSocket implements IRoomSocket,Runnable{
                 byte[] bytes = new byte[Constants.MAX_PACKET_SIZE];
                 DatagramPacket packet = new DatagramPacket(bytes,bytes.length);
                 SERVER_SOCKET.receive(packet);
-                Packet p = Packet.parse(packet.getData());
+                Packet p = Packet.parse(packet.getData(),KEYS); //TODO is encryption correct?
                 handleServerPacket(p);
-            } catch (IOException | InvalidPacketFormatException e) {
+            } catch (IOException | InvalidPacketFormatException | CryptoException e) {
 
             }
 
@@ -100,10 +103,10 @@ public class RoomSocket implements IRoomSocket,Runnable{
             try{
                 byte[] bytes = new byte[Constants.MAX_PACKET_SIZE];
                 DatagramPacket packet = new DatagramPacket(bytes,bytes.length);
-                CLIENT_SOCKET.receive(packet);
+                CLIENT_SOCKET.receive(packet);         //TODO encryption?
                 Packet p = Packet.parse(packet.getData());
                 handleClientPacket(p);
-            } catch (IOException | InvalidPacketFormatException e) {
+            } catch (IOException | InvalidPacketFormatException | CryptoException e) {
 
             }
         }
@@ -115,9 +118,11 @@ public class RoomSocket implements IRoomSocket,Runnable{
             case Constants.OPCODE.CRSUC:
                 SuccessfulRoomCreationPacket s = (SuccessfulRoomCreationPacket) packet;
                 //handle room stuff
+                Main.getInstance().getEventNode().fireEvent(new RoomResponseEvent(RoomResponseEvent.CREATE_ROOM,true,s.getName()));
                 break;
             case Constants.OPCODE.JOINSUC:
-                //TODO join room packet missing
+                JoinRoomSuccessPacket j = (JoinRoomSuccessPacket) packet;
+                Main.getInstance().getEventNode().fireEvent(new RoomResponseEvent(RoomResponseEvent.JOIN_ROOM,true,j.getName()));
                 break;
         }
     }
@@ -154,28 +159,27 @@ public class RoomSocket implements IRoomSocket,Runnable{
     private void handleAnnouncement(AnnouncePacket packet){
         TIME_STAMP.getAndIncrement();
         AnnounceAckPacket ackPacket = packet.createAck(TIME_STAMP.get());
-        IO_QUEUE.offer(ackPacket.getDatagramPacket());
-        String username = ackPacket.getNickName();
-
-        //TODO create event for Controllers to listen to
+        IO_QUEUE.offer(ackPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER));
+        Main.getInstance().getEventNode().fireEvent(new UserJoinedEvent(UserJoinedEvent.JOIN_EVENT, packet.getNickName()));
     }
 
     private void handleAnnouncementAck(AnnounceAckPacket packet){
         TIME_STAMP.getAndIncrement();
-        AnnounceAckAckPacket ackPacket = new AnnounceAckAckPacket();//TODO ackPacket should create its own ack packet
-        IO_QUEUE.offer(ackPacket.getDatagramPacket());
+        AnnounceAckAckPacket ackPacket = new AnnounceAckAckPacket();
+        IO_QUEUE.offer(ackPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER));
+        //TODO handle not receiving packet for a long time needing a resend.
     }
 
     private void handleAnnouncementAckAck(AnnounceAckAckPacket packet) {
         TIME_STAMP.getAndIncrement();
 
-        //TODO nothing?
+        //TODO nothing? terminate waiting condition for handleAnnouncementAck
     }
 
     private void handleMessage(MessagePacket packet){
 
         MessageAckPacket ackPacket = packet.createAck();
-        IO_QUEUE.offer(ackPacket.getDatagramPacket());
+        IO_QUEUE.offer(ackPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER));
 
         //resolve timeStamp
         long timestamp = Math.max(TIME_STAMP.getAndIncrement(),packet.getTimestamp());
@@ -183,24 +187,25 @@ public class RoomSocket implements IRoomSocket,Runnable{
         //create message
         Message m = new Message(packet.getMessage(),packet.getNickName(),timestamp);
         Main.getInstance().getEventNode().fireEvent(new MessageReceivedEvent(MessageReceivedEvent.MESSAGE_EVENT,m));
+
+        //TODO timer if ack isn't received fast enough.
     }
 
     private void handleMessageAck(MessageAckPacket packet){
         TIME_STAMP.getAndIncrement();
 
-        //TODO nothing?
+        //TODO nothing? break timer for ack packet.
     }
 
     private void handleLeaveRoom(LeaveRoomPacket packet){
         TIME_STAMP.getAndIncrement();
-
-        //TODO create event for Controller to listen to
+        Main.getInstance().getEventNode().fireEvent(new UserLeftEvent(UserLeftEvent.LEAVE_EVENT, packet.getNickname()));
     }
 
     private void handleKeepAlive(KeepAlivePacket packet){
         TIME_STAMP.getAndIncrement();
         KeepAliveAckPacket ackPacket = new KeepAliveAckPacket();
-        IO_QUEUE.offer(ackPacket.getDatagramPacket());
+        IO_QUEUE.offer(ackPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER));
 
         //TODO handle logistics for this
     }
@@ -213,47 +218,38 @@ public class RoomSocket implements IRoomSocket,Runnable{
     //IMPORTANT ALL OF THESE MESSAGES SHOULD END WITH SENDING A PACKET TO IOQUEUE AND INCREMENTING TIME_STAMP
     @Override
     public void attemptToCreateRoom(String room, String username, String password) {
-        //TODO Needs roomname.  Type?
-        RoomCreationRequestPacket creationRequestPacket = new RoomCreationRequestPacket(room,username,Constants.TYPE.UNICAST);
-        DatagramPacket packet = creationRequestPacket.getDatagramPacket();
-        packet.setPort(Constants.PORTS.SERVER);
-        packet.setAddress(SERVER_ADDRESS);
-        IO_QUEUE.offer(creationRequestPacket.getDatagramPacket());
+        RoomCreationRequestPacket creationRequestPacket = new RoomCreationRequestPacket(room,username,password,Constants.TYPE.UNICAST);
+        DatagramPacket packet = creationRequestPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER);
+        IO_QUEUE.offer(packet);
         TIME_STAMP.getAndIncrement();
     }
 
     @Override
     public void attemptToJoinRoom(String room, String username, String password) {
-        //TODO needs to be joinRoomRequest
-        RoomCreationRequestPacket creationRequestPacket = new RoomCreationRequestPacket(room,username,Constants.TYPE.UNICAST);
-        DatagramPacket packet = creationRequestPacket.getDatagramPacket();
-        packet.setPort(Constants.PORTS.SERVER);
-        packet.setAddress(SERVER_ADDRESS);
-        IO_QUEUE.offer(creationRequestPacket.getDatagramPacket());
+        JoinRoomPacket joinRequestPacket = new JoinRoomPacket(room,username,password,Constants.TYPE.UNICAST);
+        DatagramPacket packet = joinRequestPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER);
+        IO_QUEUE.offer(packet);
         TIME_STAMP.getAndIncrement();
+        //TODO if timeout for ack, send failure.
     }
 
     @Override
     public long sendToEveryone(String message, String password) {
         MessagePacket messagePacket = new MessagePacket(message,password,Constants.TYPE.UNICAST);
-        DatagramPacket packet = messagePacket.getDatagramPacket();
+        DatagramPacket packet = messagePacket.getDatagramPacket(currentMulticastAddress,Constants.PORTS.SERVER);
         packet.setPort(Constants.PORTS.CLIENT);
         //packet.setAddress("0.0.0.0"); //TODO get MULTICAST IP if needed.
-        IO_QUEUE.offer(messagePacket.getDatagramPacket());
+        IO_QUEUE.offer(packet);
         return TIME_STAMP.getAndIncrement();
     }
 
     @Override
-    public void sendLeavingMessage(String username) {
-        LeaveRoomPacket packet = new LeaveRoomPacket(username);
-        DatagramPacket clientPacket = packet.getDatagramPacket();
-        LeaveRoomPacket packet2 = new LeaveRoomPacket(username);
-        DatagramPacket serverPacket = packet2.getDatagramPacket();
-        clientPacket.setPort(Constants.PORTS.CLIENT);
-        //TODO client address?
+    public void sendLeavingMessage(String username, String roomname) {
+        LeaveRoomPacket packet = new LeaveRoomPacket(username, roomname);
+        DatagramPacket clientPacket = packet.getDatagramPacket(currentMulticastAddress,Constants.PORTS.SERVER);
+        LeaveRoomPacket packet2 = new LeaveRoomPacket(username, roomname);
+        DatagramPacket serverPacket = packet2.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER);
         IO_QUEUE.offer(clientPacket);
-        serverPacket.setPort(Constants.PORTS.SERVER);
-        serverPacket.setAddress(SERVER_ADDRESS);
         IO_QUEUE.offer(serverPacket);
     }
 

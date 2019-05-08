@@ -1,5 +1,6 @@
 package Client.Controllers;
 
+import Client.Events.RoomResponseEvent;
 import Client.Main;
 import Client.Sockets.IRoomSocket;
 import Client.Sockets.RoomSocket;
@@ -25,35 +26,48 @@ public class LoginController implements IEnterRoom {
     public LoginController() throws IOException, CryptoException {
         roomSocket = new RoomSocket();
     }
-    //TODO finish implementation of the events
     @Override
-    public boolean requestNewRoom(String nickname, String roomID, String password) {
-        return false;
-    }
-
-    @Override
-    public boolean requestToJoinRoom(String nickname, String roomID, String password) {
-        return false;
-    }
-
-    @Override
-    public boolean receiveRoomData() {
-        return false;
-    }
-
-    @FXML
-    private void onCreateRoom(MouseEvent e){
-        if(hasCorrectInput()){
-            //create room
+    public void onNewRoomResponse(RoomResponseEvent e) {
+        if(e.getResponse()){
             moveScene();
+        } else{
+            //TODO handle error informtion
+            Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+            errorAlert.setHeaderText("Empty Field Found!");
+            errorAlert.setContentText("The server was unable to create a new room");
+            errorAlert.showAndWait();
         }
     }
 
+    @Override
+    public void onJoinRoomResponse(RoomResponseEvent e) {
+        if(e.getResponse()){
+            moveScene();
+        } else{
+            //TODO handle error informtion
+            Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+            errorAlert.setHeaderText("Empty Field Found!");
+            errorAlert.setContentText("The server was unable to connect you to a room");
+            errorAlert.showAndWait();
+        }
+    }
+
+
+    @Override
     @FXML
-    private void onJoinRoom(MouseEvent e){
+    public void onCreateRoom(MouseEvent e){
+        if(hasCorrectInput()){
+            //create room
+            roomSocket.attemptToCreateRoom(roomNameLabel.getText(),nicknameField.getText(),passwordField.getText());
+        }
+    }
+
+    @Override
+    @FXML
+    public void onJoinRoom(MouseEvent e){
         if(hasCorrectInput()){
             //and authentication for room
-            moveScene();
+            roomSocket.attemptToJoinRoom(roomNameLabel.getText(),nicknameField.getText(),passwordField.getText());
         }
     }
 

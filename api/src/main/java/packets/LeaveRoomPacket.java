@@ -49,6 +49,10 @@ public class LeaveRoomPacket extends Packet {
     public byte getOperationCode() {
         return Constants.OPCODE.LEAVEROOM;
     }
+
+    public String getNickname() {
+        return nickname;
+    }
 }
 /*
           1           <= 32

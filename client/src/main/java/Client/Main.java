@@ -2,10 +2,7 @@ package Client;
 
 import Client.Controllers.LoginController;
 import Client.Controllers.MessagingController;
-import Client.Events.EventNode;
-import Client.Events.MessageReceivedEvent;
-import Client.Events.UserJoinedEvent;
-import Client.Events.UserLeftEvent;
+import Client.Events.*;
 import javafx.application.Application;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
@@ -43,6 +40,8 @@ public class Main extends Application {
         eventNode.addEventHandler(MessageReceivedEvent.MESSAGE_EVENT, messageReceivedEvent -> messageWindow.getController().receiveMessage(messageReceivedEvent));
         eventNode.addEventHandler(UserJoinedEvent.JOIN_EVENT, joinEvent -> messageWindow.getController().userJoinedRoom(joinEvent));
         eventNode.addEventHandler(UserLeftEvent.LEAVE_EVENT, leftEvent -> messageWindow.getController().userLeftRoom(leftEvent));
+        eventNode.addEventHandler(RoomResponseEvent.CREATE_ROOM, createEvent -> loginWindow.getController().onNewRoomResponse(createEvent));
+        eventNode.addEventHandler(RoomResponseEvent.JOIN_ROOM, joinEvent -> loginWindow.getController().onJoinRoomResponse(joinEvent));
     }
 
     public Node getEventNode() {
@@ -52,6 +51,7 @@ public class Main extends Application {
     public Window getCurrentWindow(){
         return window;
     }
+
     public void activate(String name){
         window = scenes.get(name);
         stage.setScene(window.getScene());
