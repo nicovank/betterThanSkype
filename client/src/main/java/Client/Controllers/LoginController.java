@@ -30,7 +30,6 @@ public class LoginController implements IEnterRoom {
     @Override
     public void onNewRoomResponse(RoomResponseEvent e) {
         if(e.getResponse()){
-            //TODO more join stuff?
             moveScene();
         } else{
             //TODO handle error informtion
@@ -44,7 +43,6 @@ public class LoginController implements IEnterRoom {
     @Override
     public void onJoinRoomResponse(RoomResponseEvent e) {
         if(e.getResponse()){
-            //TODO more join stuff?
             moveScene();
         } else{
             //TODO handle error informtion

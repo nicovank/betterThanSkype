@@ -33,7 +33,7 @@ public class MessagingController implements IMessage, ILeaveRoom, IUserEnter,IUs
 
     @Override
     public void leaveRoom(String nickname, String roomID, String password) {
-        roomSocket.sendLeavingMessage(nickname);
+        roomSocket.sendLeavingMessage(nickname,roomID);
     }
 
     @Override

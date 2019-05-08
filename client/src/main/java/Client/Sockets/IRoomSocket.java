@@ -8,7 +8,7 @@ public interface IRoomSocket {
 
     long sendToEveryone(String message,String password);
 
-    void sendLeavingMessage(String username);
+    void sendLeavingMessage(String username, String roomname);
 
     void addToSendList(String nickName,Address address);
 

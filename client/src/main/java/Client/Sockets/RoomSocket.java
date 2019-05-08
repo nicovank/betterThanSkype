@@ -1,9 +1,6 @@
 package Client.Sockets;
 
-import Client.Events.Message;
-import Client.Events.MessageReceivedEvent;
-import Client.Events.UserJoinedEvent;
-import Client.Events.UserLeftEvent;
+import Client.Events.*;
 import Client.Main;
 import crypto.CryptoException;
 import crypto.RSA;
@@ -45,14 +42,19 @@ public class RoomSocket implements IRoomSocket,Runnable{
         DatagramPacket sendPacket = prPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER);
         SERVER_SOCKET.send(sendPacket);
 
-        //Get ack and key from server //TODO make sure this ALWAYS works
-        DatagramPacket receivePacket = new DatagramPacket(bytes,bytes.length);
-        SERVER_SOCKET.receive(receivePacket);
+        //Get ack and key from server
+        boolean successfulServerAck = false;
+        DatagramPacket receivePacket= new DatagramPacket(bytes,bytes.length);
         Packet p = null;
-        try {
-            p = Packet.parse(Arrays.copyOf(receivePacket.getData(), receivePacket.getLength()));
-        } catch (InvalidPacketFormatException e) {
-            e.printStackTrace();
+
+        while(!successfulServerAck) {
+            SERVER_SOCKET.receive(receivePacket);
+            try {
+                p = Packet.parse(Arrays.copyOf(receivePacket.getData(), receivePacket.getLength()));
+                successfulServerAck = true;
+            } catch (InvalidPacketFormatException e) {
+                e.printStackTrace();
+            }
         }
         SERVER_PUBLIC_KEY = ((PublicKeyPacket) p).getPublicKey();
 
@@ -91,7 +93,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
                 byte[] bytes = new byte[Constants.MAX_PACKET_SIZE];
                 DatagramPacket packet = new DatagramPacket(bytes,bytes.length);
                 SERVER_SOCKET.receive(packet);
-                Packet p = Packet.parse(packet.getData(),KEYS);
+                Packet p = Packet.parse(packet.getData(),KEYS); //TODO is encryption correct?
                 handleServerPacket(p);
             } catch (IOException | InvalidPacketFormatException | CryptoException e) {
 
@@ -101,10 +103,10 @@ public class RoomSocket implements IRoomSocket,Runnable{
             try{
                 byte[] bytes = new byte[Constants.MAX_PACKET_SIZE];
                 DatagramPacket packet = new DatagramPacket(bytes,bytes.length);
-                CLIENT_SOCKET.receive(packet);
+                CLIENT_SOCKET.receive(packet);         //TODO encryption?
                 Packet p = Packet.parse(packet.getData());
                 handleClientPacket(p);
-            } catch (IOException | InvalidPacketFormatException e) {
+            } catch (IOException | InvalidPacketFormatException | CryptoException e) {
 
             }
         }
@@ -116,9 +118,11 @@ public class RoomSocket implements IRoomSocket,Runnable{
             case Constants.OPCODE.CRSUC:
                 SuccessfulRoomCreationPacket s = (SuccessfulRoomCreationPacket) packet;
                 //handle room stuff
+                Main.getInstance().getEventNode().fireEvent(new RoomResponseEvent(RoomResponseEvent.CREATE_ROOM,true,s.getName()));
                 break;
             case Constants.OPCODE.JOINSUC:
-                //TODO join room packet missing
+                JoinRoomSuccessPacket j = (JoinRoomSuccessPacket) packet;
+                Main.getInstance().getEventNode().fireEvent(new RoomResponseEvent(RoomResponseEvent.JOIN_ROOM,true,j.getName()));
                 break;
         }
     }
@@ -163,7 +167,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
 
     private void handleAnnouncementAck(AnnounceAckPacket packet){
         TIME_STAMP.getAndIncrement();
-        AnnounceAckAckPacket ackPacket = new AnnounceAckAckPacket();//TODO ackPacket should create its own ack packet
+        AnnounceAckAckPacket ackPacket = new AnnounceAckAckPacket();
         IO_QUEUE.offer(ackPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER));
         //TODO handle not receiving packet for a long time needing a resend.
     }
@@ -218,7 +222,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
     @Override
     public void attemptToCreateRoom(String room, String username, String password) {
         //TODO Needs roomname.  Type?
-        RoomCreationRequestPacket creationRequestPacket = new RoomCreationRequestPacket(room,username,Constants.TYPE.UNICAST);
+        RoomCreationRequestPacket creationRequestPacket = new RoomCreationRequestPacket(room,username,password,Constants.TYPE.UNICAST);
         DatagramPacket packet = creationRequestPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER);
         IO_QUEUE.offer(packet);
         TIME_STAMP.getAndIncrement();
@@ -226,11 +230,11 @@ public class RoomSocket implements IRoomSocket,Runnable{
 
     @Override
     public void attemptToJoinRoom(String room, String username, String password) {
-        //TODO needs to be joinRoomRequest
-        RoomCreationRequestPacket creationRequestPacket = new RoomCreationRequestPacket(room,username,Constants.TYPE.UNICAST);
-        DatagramPacket packet = creationRequestPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER);
+        JoinRoomPacket joinRequestPacket = new JoinRoomPacket(room,username,password,Constants.TYPE.UNICAST);
+        DatagramPacket packet = joinRequestPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER);
         IO_QUEUE.offer(packet);
         TIME_STAMP.getAndIncrement();
+        //TODO if timeout for ack, send failure.
     }
 
     @Override
@@ -244,10 +248,10 @@ public class RoomSocket implements IRoomSocket,Runnable{
     }
 
     @Override
-    public void sendLeavingMessage(String username) {
-        LeaveRoomPacket packet = new LeaveRoomPacket(username);
+    public void sendLeavingMessage(String username, String roomname) {
+        LeaveRoomPacket packet = new LeaveRoomPacket(username, roomname);
         DatagramPacket clientPacket = packet.getDatagramPacket(currentMulticastAddress,Constants.PORTS.SERVER);
-        LeaveRoomPacket packet2 = new LeaveRoomPacket(username);
+        LeaveRoomPacket packet2 = new LeaveRoomPacket(username, roomname);
         DatagramPacket serverPacket = packet2.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER);
         IO_QUEUE.offer(clientPacket);
         IO_QUEUE.offer(serverPacket);
