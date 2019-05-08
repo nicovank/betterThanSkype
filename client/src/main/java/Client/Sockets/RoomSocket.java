@@ -10,6 +10,7 @@ import utils.Constants;
 import java.io.IOException;
 import java.net.*;
 import java.security.PublicKey;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
@@ -23,6 +24,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
     private final PublicKey SERVER_PUBLIC_KEY;
     private final ConcurrentLinkedQueue<DatagramPacket> IO_QUEUE;
     private final AtomicLong TIME_STAMP;
+    private final ArrayList<ExpectedPacket> EXPECTED_PACKETS;
     private InetAddress currentMulticastAddress;
 
     public RoomSocket() throws IOException, CryptoException {
@@ -60,6 +62,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
 
         //concurrency setup
         IO_QUEUE = new ConcurrentLinkedQueue<>();
+        EXPECTED_PACKETS = new ArrayList<>();
         TIME_STAMP = new AtomicLong(0);
     }
 
@@ -74,6 +77,20 @@ public class RoomSocket implements IRoomSocket,Runnable{
 
         while(!Thread.interrupted()){
             //always send before receiving
+            for (ExpectedPacket ex: EXPECTED_PACKETS
+            ) {
+                if((System.nanoTime()-ex.getTimestamp()) > 500000000){
+                    try {
+                        if (ex.getPacket().getOperationCode()<8) {
+                            SERVER_SOCKET.send(ex.getPacket().getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER));
+                        } else  {
+                            CLIENT_SOCKET.send(ex.getPacket().getDatagramPacket(currentMulticastAddress,Constants.PORTS.CLIENT));
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
             while(!IO_QUEUE.isEmpty()){
                 DatagramPacket packet = IO_QUEUE.poll();
                 try {
@@ -94,6 +111,12 @@ public class RoomSocket implements IRoomSocket,Runnable{
                 DatagramPacket packet = new DatagramPacket(bytes,bytes.length);
                 SERVER_SOCKET.receive(packet);
                 Packet p = Packet.parse(packet.getData(),KEYS); //TODO is encryption correct?
+                for (ExpectedPacket ex :EXPECTED_PACKETS
+                ) {
+                    if(p.getOperationCode()==ex.getPacket().getOperationCode()){
+                        EXPECTED_PACKETS.remove(ex);
+                    }
+                }
                 handleServerPacket(p);
             } catch (IOException | InvalidPacketFormatException | CryptoException e) {
 
@@ -105,10 +128,17 @@ public class RoomSocket implements IRoomSocket,Runnable{
                 DatagramPacket packet = new DatagramPacket(bytes,bytes.length);
                 CLIENT_SOCKET.receive(packet);         //TODO encryption?
                 Packet p = Packet.parse(packet.getData());
+                for (ExpectedPacket ex :EXPECTED_PACKETS
+                     ) {
+                    if(p.getOperationCode()==ex.getPacket().getOperationCode()){
+                        EXPECTED_PACKETS.remove(ex);
+                    }
+                }
                 handleClientPacket(p);
             } catch (IOException | InvalidPacketFormatException | CryptoException e) {
 
             }
+
         }
     }
 
@@ -159,6 +189,8 @@ public class RoomSocket implements IRoomSocket,Runnable{
     private void handleAnnouncement(AnnouncePacket packet){
         TIME_STAMP.getAndIncrement();
         AnnounceAckPacket ackPacket = packet.createAck(TIME_STAMP.get());
+        ExpectedPacket ex = new ExpectedPacket(ackPacket,TIME_STAMP.get());
+        EXPECTED_PACKETS.add(ex);
         IO_QUEUE.offer(ackPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER));
         Main.getInstance().getEventNode().fireEvent(new UserJoinedEvent(UserJoinedEvent.JOIN_EVENT, packet.getNickName()));
     }
@@ -166,6 +198,8 @@ public class RoomSocket implements IRoomSocket,Runnable{
     private void handleAnnouncementAck(AnnounceAckPacket packet){
         TIME_STAMP.getAndIncrement();
         AnnounceAckAckPacket ackPacket = new AnnounceAckAckPacket();
+        ExpectedPacket ex = new ExpectedPacket(ackPacket,TIME_STAMP.get());
+        EXPECTED_PACKETS.add(ex);
         IO_QUEUE.offer(ackPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER));
         //TODO handle not receiving packet for a long time needing a resend.
     }
@@ -221,6 +255,9 @@ public class RoomSocket implements IRoomSocket,Runnable{
         RoomCreationRequestPacket creationRequestPacket = new RoomCreationRequestPacket(room,username,password,Constants.TYPE.UNICAST);
         DatagramPacket packet = creationRequestPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER);
         IO_QUEUE.offer(packet);
+        SuccessfulRoomCreationPacket suc = new SuccessfulRoomCreationPacket(room,password,SERVER_ADDRESS,Constants.PORTS.SERVER,Constants.TYPE.UNICAST);
+        ExpectedPacket ex = new ExpectedPacket(suc,TIME_STAMP.get());
+        EXPECTED_PACKETS.add(ex);
         TIME_STAMP.getAndIncrement();
     }
 
@@ -228,6 +265,8 @@ public class RoomSocket implements IRoomSocket,Runnable{
     public void attemptToJoinRoom(String room, String username, String password) {
         JoinRoomPacket joinRequestPacket = new JoinRoomPacket(room,username,password,Constants.TYPE.UNICAST);
         DatagramPacket packet = joinRequestPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER);
+        JoinRoomSuccessPacket succ = new JoinRoomSuccessPacket(username,password,SERVER_ADDRESS,Constants.PORTS.SERVER,Constants.TYPE.UNICAST);
+        ExpectedPacket ex = new ExpectedPacket(succ,TIME_STAMP.get());
         IO_QUEUE.offer(packet);
         TIME_STAMP.getAndIncrement();
         //TODO if timeout for ack, send failure.
@@ -238,6 +277,9 @@ public class RoomSocket implements IRoomSocket,Runnable{
         MessagePacket messagePacket = new MessagePacket(message,password,Constants.TYPE.UNICAST);
         DatagramPacket packet = messagePacket.getDatagramPacket(currentMulticastAddress,Constants.PORTS.SERVER);
         packet.setPort(Constants.PORTS.CLIENT);
+        MessageAckPacket ex = messagePacket.createAck();
+        ExpectedPacket expectedPacket = new ExpectedPacket(ex,TIME_STAMP.get());
+        EXPECTED_PACKETS.add(expectedPacket);
         //packet.setAddress("0.0.0.0"); //TODO get MULTICAST IP if needed.
         IO_QUEUE.offer(packet);
         return TIME_STAMP.getAndIncrement();
