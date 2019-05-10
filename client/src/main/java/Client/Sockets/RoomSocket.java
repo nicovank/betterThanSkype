@@ -82,15 +82,11 @@ public class RoomSocket implements IRoomSocket,Runnable{
             for (ExpectedPacket ex: EXPECTED_PACKETS
             ) {
                 if((System.nanoTime()-ex.getTimestamp()) > 500000000){
-                    try {
                         if (ex.getPacket().getOperationCode()<8) {
-                            SERVER_SOCKET.send(ex.getOriginal().getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER));
+                            IO_QUEUE.offer(ex.getOriginal().getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER));
                         } else  {
-                            CLIENT_SOCKET.send(ex.getOriginal().getDatagramPacket(currentMulticastAddress,Constants.PORTS.CLIENT));
+                            IO_QUEUE.offer(ex.getOriginal().getDatagramPacket(currentMulticastAddress,Constants.PORTS.CLIENT));
                         }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
                 }
             }
             while(!IO_QUEUE.isEmpty()){
