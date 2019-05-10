@@ -307,6 +307,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
     }
 
     /**
+     * @author Nick Esposito
      * Used for checking packets from EXPECTED_PACKETS vs what was received
      * @param a Packet
      * @param b Packet
