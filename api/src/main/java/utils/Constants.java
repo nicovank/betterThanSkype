@@ -25,7 +25,7 @@ public final class Constants {
         public static final byte PUB = 1;
         public static final byte CREATEROOM = 2;
         public static final byte JOINREQ = 3;
-        public static final byte CRSUC = 4;
+        public static final byte MRCS = 4; // Multicast Room Creation Success
         public static final byte JOINSUC = 5;
         public static final byte LEAVEROOM = 6;
         public static final byte ERROR = 7;
@@ -47,10 +47,11 @@ public final class Constants {
     }
 
     public static final class ERROR_CODE {
-        public static final byte INVALIDNAME = 51;
-        public static final byte REWP = 51;
-        public static final byte RERP = 53;
-        public static final byte OTHER = 54;
+        public static final byte CREATEERROR = 71;
+        public static final byte JOINERROR = 72;
+        // when the server does not know the client's public key, hence cannot send an encrypted response
+        public static final byte UNKNOWNPUBLICKEY = 73;
+        public static final byte OTHER = 74;
 
         private ERROR_CODE() {
 

@@ -3,10 +3,9 @@ package server;
 import crypto.CryptoException;
 import crypto.PublicKeyDictionary;
 import crypto.RSA;
-import packets.Packet;
-import packets.PublicKeyPacket;
-import packets.RoomCreationRequestPacket;
+import packets.*;
 import rooms.MulticastRoom;
+import rooms.Peer;
 import rooms.Room;
 import utils.Address;
 import utils.Constants;
@@ -62,17 +61,46 @@ public final class PacketHandler extends Thread {
 
             }
         } else {
-            if (!dictionary.containsKey(address)) {
-                // TODO SEND ERROR PACKET
+            PublicKey pub = dictionary.get(address);
+            if (pub == null) {
+                // We do not know the client's public key, and therefore cannot process their request.
+                Packet response = new ErrorPacket(Constants.ERROR_CODE.UNKNOWNPUBLICKEY);
+                outbound.offer(response.getDatagramPacket(address));
             } else switch (packet.getOperationCode()) {
 
                 case Constants.OPCODE.CREATEROOM:
                     RoomCreationRequestPacket request = (RoomCreationRequestPacket) packet;
-                    // TODO CREATE NEW ROOM, SEND SUCCESS OR ERROR PACKET DEPENDING.
+                    if (request.getType() == Constants.TYPE.MULTICAST) {
+                        Peer creator = new Peer(request.getUserName(), address);
+                        MulticastRoom room = new MulticastRoom(request.getRoomName(), request.getPassword(), Address.randomMulticastGroup());
+                        room.addPeer(creator);
+
+                        if (room.equals(rooms.putIfAbsent(room.getName(), room))) {
+                            // the creation of the room was successful
+                            Packet response = new SuccessfulMulticastRoomCreationPacket(
+                                    room.getName(),
+                                    room.getSecret(),
+                                    room.getIP(),
+                                    room.getPort()
+                            );
+
+                            try {
+                                outbound.offer(response.getDatagramPacket(address, pub));
+                            } catch (CryptoException ignored) {
+
+                            }
+                        }
+                    } else {
+                        // TODO SEND ERROR PACKET (UNICAST NOT SUPPORTED YET)
+                    }
                     break;
 
                 case Constants.OPCODE.JOINREQ:
                     // TODO WHEN A JOIN ROOM PACKET EXISTS
+                    break;
+
+                case Constants.OPCODE.LEAVEROOM:
+                    // TODO HANDLE
                     break;
             }
         }

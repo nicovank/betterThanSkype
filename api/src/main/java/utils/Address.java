@@ -12,6 +12,10 @@ public final class Address {
         this.port = port;
     }
 
+    public static Address randomMulticastGroup() {
+
+    }
+
     public InetAddress getAddress() {
         return address;
     }

@@ -78,7 +78,7 @@ public abstract class Packet {
 
         switch (data[0]) {
             case Constants.OPCODE.CRSUC:
-                return SuccessfulRoomCreationPacket.parse(packet);
+                return SuccessfulMulticastRoomCreationPacket.parse(packet);
             case Constants.OPCODE.ERROR:
                 return ErrorPacket.parse(packet);
             case Constants.OPCODE.PUB:

@@ -17,7 +17,9 @@ public class RoomCreationRequestPacket extends Packet {
         return userName;
     }
 
-    public String getRoomName() { return roomName; }
+    public String getRoomName() {
+        return roomName;
+    }
 
     public String getPassword() {
         return password;
@@ -49,11 +51,11 @@ public class RoomCreationRequestPacket extends Packet {
         buffer.get(userName);
 
         byte rnlength = buffer.get();
-        if(rnlength < 0 || rnlength > 32 || rnlength > buffer.remaining() - 5){
+        if (rnlength < 0 || rnlength > 32 || rnlength > buffer.remaining() - 5) {
             throw new InvalidPacketFormatException("Received invalid CREATEROOM packet.");
         }
 
-        byte [] roomName = new byte[rnlength];
+        byte[] roomName = new byte[rnlength];
         buffer.get(roomName);
 
         int plength = buffer.getInt();
@@ -80,11 +82,11 @@ public class RoomCreationRequestPacket extends Packet {
         byte[] roomName = this.roomName.getBytes(StandardCharsets.UTF_8);
         byte[] password = this.password.getBytes(StandardCharsets.UTF_8);
 
-        ByteBuffer buffer = ByteBuffer.allocate(userName.length + roomName.length + password.length + 6);
+        ByteBuffer buffer = ByteBuffer.allocate(userName.length + roomName.length + password.length + 7);
 
         buffer.put((byte) userName.length);
         buffer.put(userName);
-        buffer.put((byte)roomName.length);
+        buffer.put((byte) roomName.length);
         buffer.put(roomName);
         buffer.putInt(password.length);
         buffer.put(password);

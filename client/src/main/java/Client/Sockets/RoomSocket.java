@@ -116,7 +116,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
         //handle all packets a client should be expected to recieve from the server.
         switch (packet.getOperationCode()) {
             case Constants.OPCODE.CRSUC:
-                SuccessfulRoomCreationPacket s = (SuccessfulRoomCreationPacket) packet;
+                SuccessfulMulticastRoomCreationPacket s = (SuccessfulMulticastRoomCreationPacket) packet;
                 //handle room stuff
                 Main.getInstance().getEventNode().fireEvent(new RoomResponseEvent(RoomResponseEvent.CREATE_ROOM,true,s.getName()));
                 break;
