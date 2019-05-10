@@ -84,9 +84,9 @@ public class RoomSocket implements IRoomSocket,Runnable{
                 if((System.nanoTime()-ex.getTimestamp()) > 500000000){
                     try {
                         if (ex.getPacket().getOperationCode()<8) {
-                            SERVER_SOCKET.send(ex.getPacket().getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER));
+                            SERVER_SOCKET.send(ex.getOriginal().getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER));
                         } else  {
-                            CLIENT_SOCKET.send(ex.getPacket().getDatagramPacket(currentMulticastAddress,Constants.PORTS.CLIENT));
+                            CLIENT_SOCKET.send(ex.getOriginal().getDatagramPacket(currentMulticastAddress,Constants.PORTS.CLIENT));
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
