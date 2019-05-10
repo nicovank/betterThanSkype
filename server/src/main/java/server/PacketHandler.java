@@ -6,6 +6,7 @@ import crypto.RSA;
 import packets.Packet;
 import packets.PublicKeyPacket;
 import packets.RoomCreationRequestPacket;
+import rooms.MulticastRoom;
 import rooms.Room;
 import utils.Address;
 import utils.Constants;
@@ -67,13 +68,7 @@ public final class PacketHandler extends Thread {
 
                 case Constants.OPCODE.CREATEROOM:
                     RoomCreationRequestPacket request = (RoomCreationRequestPacket) packet;
-                    if (rooms.containsKey(request.getRoomName())) {
-                        // TODO SEND ROOM ALREADY EXISTS ERROR PACKET
-                    } else {
-                        Room room = new Room(); // TODO put values in the room class (notably generate random Multicast URL)
-                        rooms.put(request.getRoomName(), room);
-                        // TODO SEND SUCCESSFUL ROOM CREATION PACKET
-                    }
+                    // TODO CREATE NEW ROOM, SEND SUCCESS OR ERROR PACKET DEPENDING.
                     break;
 
                 case Constants.OPCODE.JOINREQ:
