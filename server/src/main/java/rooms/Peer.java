@@ -1,4 +1,4 @@
-package server;
+package rooms;
 
 import utils.Address;
 
