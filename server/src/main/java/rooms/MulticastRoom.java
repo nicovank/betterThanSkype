@@ -3,8 +3,8 @@ package rooms;
 import java.net.InetAddress;
 
 public final class MulticastRoom extends Room {
-    private InetAddress ip;
-    private long port;
+    private final InetAddress ip;
+    private final long port;
 
     public MulticastRoom(String name, String password, InetAddress ip, long port) {
         super(name, password);

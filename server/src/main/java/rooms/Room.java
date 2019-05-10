@@ -5,10 +5,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class Room {
 
-    private String secret;
-    private Map<String, Peer> peers;
-    private String password;
-    private String name;
+    private final String name;
+    private final String password;
+    private final String secret;
+    private final Map<String, Peer> peers;
 
 
     public Room(String name, String password) {
