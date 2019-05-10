@@ -348,7 +348,9 @@ public class RoomSocket implements IRoomSocket,Runnable{
 
                     return am.equals(bm);
                 }
+                default:return false;
             }
+
         }
     }
 }
