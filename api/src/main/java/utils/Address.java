@@ -13,7 +13,7 @@ public final class Address {
     }
 
     public static Address randomMulticastGroup() {
-
+        throw new UnsupportedOperationException();
     }
 
     public InetAddress getAddress() {

@@ -25,7 +25,7 @@ public final class SuccessfulMulticastRoomCreationPacket extends Packet {
         return name;
     }
 
-    public String getPassword() {
+    public String getSecret() {
         return secret;
     }
 
@@ -38,34 +38,39 @@ public final class SuccessfulMulticastRoomCreationPacket extends Packet {
     }
 
     public static SuccessfulMulticastRoomCreationPacket parse(byte[] data) throws InvalidPacketFormatException {
-        ByteBuffer buff = ByteBuffer.wrap(data);
+        ByteBuffer buffer = ByteBuffer.wrap(data);
 
         if (data.length == 0) {
             throw new InvalidPacketFormatException("Received invalid MRCS packet.");
         }
 
-        byte nlength = buff.get();
-        if (nlength > buff.remaining() - 7 || nlength > 32 || nlength <= 0) {
+        byte nlength = buffer.get();
+        if (nlength > buffer.remaining() - 11 || nlength > 32 || nlength <= 0) {
             throw new InvalidPacketFormatException("Received invalid MRCS packet.");
         }
+
         byte[] name = new byte[nlength];
-        buff.get(name);
+        buffer.get(name);
 
-        byte pwlength = buff.get();
-        if (pwlength > buff.remaining() - 6 || pwlength > 32 || pwlength <= 0) {
+        if (buffer.remaining() < 4) throw new InvalidPacketFormatException("Received invalid MRCS packet.");
+
+        int slength = buffer.getInt();
+        if (slength > buffer.remaining() - 6 || slength > 512 || slength < 0) {
             throw new InvalidPacketFormatException("Received invalid MRCS packet.");
         }
-        byte[] secret = new byte[pwlength];
-        buff.get(secret);
+        byte[] secret = new byte[slength];
+        buffer.get(secret);
 
-        byte iplength = buff.get();
-        if (pwlength > buff.remaining() - 5 || pwlength > 32 || pwlength <= 0) {
-            throw new InvalidPacketFormatException("Received invalid MRCS packet.");
-        }
+        if (!buffer.hasRemaining()) throw new InvalidPacketFormatException("Received invalid MRCS packet.");
+
+        byte iplength = buffer.get();
+        if (iplength > buffer.remaining() || iplength > 32 || iplength <= 0) throw new InvalidPacketFormatException("Received invalid MRCS packet.");
         byte[] ip = new byte[iplength];
-        buff.get(ip);
+        buffer.get(ip);
 
-        int port = buff.getInt();
+        if (buffer.remaining() < 4) throw new InvalidPacketFormatException("Received invalid MRCS packet.");
+
+        int port = buffer.getInt();
 
         try {
             return new SuccessfulMulticastRoomCreationPacket(
