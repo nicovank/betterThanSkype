@@ -312,9 +312,9 @@ public class RoomSocket implements IRoomSocket,Runnable{
 
     /**
      * Used for checking packets from EXPECTED_PACKETS vs what was received
-     * @param a
-     * @param b
-     * @return
+     * @param a Packet
+     * @param b Packet
+     * @return returns whether the packets are considered equal
      */
     private boolean checkPacketEquality(Packet a, Packet b){
         if(a.getOperationCode() != b.getOperationCode()){
