@@ -1,12 +1,14 @@
 package rooms;
 
+import utils.Constants;
+
 import java.net.InetAddress;
 
 public final class MulticastRoom extends Room {
     private final InetAddress ip;
-    private final long port;
+    private final int port;
 
-    public MulticastRoom(String name, String password, InetAddress ip, long port) {
+    public MulticastRoom(String name, String password, InetAddress ip, int port) {
         super(name, password);
         this.ip = ip;
         this.port = port;
@@ -16,7 +18,12 @@ public final class MulticastRoom extends Room {
         return ip;
     }
 
-    public long getPort() {
+    public int getPort() {
         return port;
+    }
+
+    @Override
+    public byte getType() {
+        return Constants.TYPE.MULTICAST;
     }
 }
