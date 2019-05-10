@@ -29,4 +29,9 @@ public class MessageAckPacket extends Packet {
     public byte getOperationCode() {
         return Constants.OPCODE.MESSAGEACK;
     }
+
+    @Override
+    public boolean equals(Object other){
+        return this.timestamp == ((MessageAckPacket) other).timestamp;
+    }
 }

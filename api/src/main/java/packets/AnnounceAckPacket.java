@@ -78,6 +78,11 @@ public class AnnounceAckPacket extends Packet {
     public byte getOperationCode() {
         return Constants.OPCODE.ANNACK;
     }
+    public boolean equals(Object other) {
+        if (!(other instanceof MessagePacket)) return false;
+        AnnounceAckPacket o = (AnnounceAckPacket) other;
+        return o.nickName.equals(this.nickName) && o.password.equals(this.password) && o.timestamp==this.timestamp;
+    }
 }
 /*
           1           <= 32       4           <=512         8

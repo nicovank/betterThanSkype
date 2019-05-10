@@ -113,7 +113,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
                 Packet p = Packet.parse(packet.getData(),KEYS); //TODO is encryption correct?
                 for (ExpectedPacket ex :EXPECTED_PACKETS
                 ) {
-                    if(p.getOperationCode()==ex.getPacket().getOperationCode()){
+                    if(checkPacketEquality(p,ex.getPacket())){
                         EXPECTED_PACKETS.remove(ex);
                     }
                 }
@@ -130,7 +130,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
                 Packet p = Packet.parse(packet.getData());
                 for (ExpectedPacket ex :EXPECTED_PACKETS
                      ) {
-                    if(p.getOperationCode()==ex.getPacket().getOperationCode()){
+                    if(checkPacketEquality(p,ex.getPacket())){
                         EXPECTED_PACKETS.remove(ex);
                     }
                 }
@@ -267,6 +267,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
         DatagramPacket packet = joinRequestPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER);
         JoinRoomSuccessPacket succ = new JoinRoomSuccessPacket(username,password,SERVER_ADDRESS,Constants.PORTS.SERVER,Constants.TYPE.UNICAST);
         ExpectedPacket ex = new ExpectedPacket(succ,TIME_STAMP.get());
+        EXPECTED_PACKETS.add(ex);
         IO_QUEUE.offer(packet);
         TIME_STAMP.getAndIncrement();
         //TODO if timeout for ack, send failure.
@@ -307,5 +308,47 @@ public class RoomSocket implements IRoomSocket,Runnable{
         //TODO implement still needs to persist username/addresses
         TIME_STAMP.getAndIncrement();
         Main.getInstance().getEventNode().fireEvent(new UserLeftEvent(UserLeftEvent.LEAVE_EVENT,nickName));
+    }
+
+    /**
+     * Used for checking packets from EXPECTED_PACKETS vs what was received
+     * @param a
+     * @param b
+     * @return
+     */
+    private boolean checkPacketEquality(Packet a, Packet b){
+        if(a.getOperationCode() != b.getOperationCode()){
+            return false;
+        }else{
+            switch (a.getOperationCode()){
+                case Constants.OPCODE.ANNACK:{
+                    AnnounceAckPacket an = (AnnounceAckPacket) a;
+                    AnnounceAckPacket bn = (AnnounceAckPacket) b;
+
+                    return an.equals(bn);
+                }
+                case Constants.OPCODE.ANNACKACK:{
+                    return true;
+                }
+                case Constants.OPCODE.CRSUC:{
+                    SuccessfulRoomCreationPacket as = (SuccessfulRoomCreationPacket) a;
+                    SuccessfulRoomCreationPacket bs = (SuccessfulRoomCreationPacket) b;
+
+                    return as.equals(bs);
+                }
+                case Constants.OPCODE.JOINSUC:{
+                    JoinRoomSuccessPacket aj = (JoinRoomSuccessPacket) a;
+                    JoinRoomSuccessPacket bj = (JoinRoomSuccessPacket) b;
+
+                    return aj.equals(bj);
+                }
+                case Constants.OPCODE.MESSAGEACK:{
+                    MessageAckPacket am =(MessageAckPacket) a;
+                    MessageAckPacket bm = (MessageAckPacket) b;
+
+                    return am.equals(bm);
+                }
+            }
+        }
     }
 }
