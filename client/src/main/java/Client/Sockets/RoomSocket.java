@@ -77,6 +77,8 @@ public class RoomSocket implements IRoomSocket,Runnable{
 
         while(!Thread.interrupted()){
             //always send before receiving
+
+            //This section handles timeouts, if an expected packet is not received .5s after it is supposed to, the packet is resent
             for (ExpectedPacket ex: EXPECTED_PACKETS
             ) {
                 if((System.nanoTime()-ex.getTimestamp()) > 500000000){
@@ -189,7 +191,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
     private void handleAnnouncement(AnnouncePacket packet){
         TIME_STAMP.getAndIncrement();
         AnnounceAckPacket ackPacket = packet.createAck(TIME_STAMP.get());
-        ExpectedPacket ex = new ExpectedPacket(ackPacket,TIME_STAMP.get());
+        ExpectedPacket ex = new ExpectedPacket(ackPacket.getAckAck(),TIME_STAMP.get(),ackPacket);
         EXPECTED_PACKETS.add(ex);
         IO_QUEUE.offer(ackPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER));
         Main.getInstance().getEventNode().fireEvent(new UserJoinedEvent(UserJoinedEvent.JOIN_EVENT, packet.getNickName()));
@@ -198,8 +200,6 @@ public class RoomSocket implements IRoomSocket,Runnable{
     private void handleAnnouncementAck(AnnounceAckPacket packet){
         TIME_STAMP.getAndIncrement();
         AnnounceAckAckPacket ackPacket = new AnnounceAckAckPacket();
-        ExpectedPacket ex = new ExpectedPacket(ackPacket,TIME_STAMP.get());
-        EXPECTED_PACKETS.add(ex);
         IO_QUEUE.offer(ackPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER));
         //TODO handle not receiving packet for a long time needing a resend.
     }
@@ -256,7 +256,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
         DatagramPacket packet = creationRequestPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER);
         IO_QUEUE.offer(packet);
         SuccessfulRoomCreationPacket suc = new SuccessfulRoomCreationPacket(room,password,SERVER_ADDRESS,Constants.PORTS.SERVER,Constants.TYPE.UNICAST);
-        ExpectedPacket ex = new ExpectedPacket(suc,TIME_STAMP.get());
+        ExpectedPacket ex = new ExpectedPacket(suc,TIME_STAMP.get(),creationRequestPacket);
         EXPECTED_PACKETS.add(ex);
         TIME_STAMP.getAndIncrement();
     }
@@ -266,7 +266,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
         JoinRoomPacket joinRequestPacket = new JoinRoomPacket(room,username,password,Constants.TYPE.UNICAST);
         DatagramPacket packet = joinRequestPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER);
         JoinRoomSuccessPacket succ = new JoinRoomSuccessPacket(username,password,SERVER_ADDRESS,Constants.PORTS.SERVER,Constants.TYPE.UNICAST);
-        ExpectedPacket ex = new ExpectedPacket(succ,TIME_STAMP.get());
+        ExpectedPacket ex = new ExpectedPacket(succ,TIME_STAMP.get(),joinRequestPacket);
         EXPECTED_PACKETS.add(ex);
         IO_QUEUE.offer(packet);
         TIME_STAMP.getAndIncrement();
@@ -279,7 +279,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
         DatagramPacket packet = messagePacket.getDatagramPacket(currentMulticastAddress,Constants.PORTS.SERVER);
         packet.setPort(Constants.PORTS.CLIENT);
         MessageAckPacket ex = messagePacket.createAck();
-        ExpectedPacket expectedPacket = new ExpectedPacket(ex,TIME_STAMP.get());
+        ExpectedPacket expectedPacket = new ExpectedPacket(ex,TIME_STAMP.get(),messagePacket);
         EXPECTED_PACKETS.add(expectedPacket);
         //packet.setAddress("0.0.0.0"); //TODO get MULTICAST IP if needed.
         IO_QUEUE.offer(packet);

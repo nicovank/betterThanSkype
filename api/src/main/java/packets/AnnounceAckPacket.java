@@ -23,7 +23,9 @@ public class AnnounceAckPacket extends Packet {
     public long getTimestamp() {
         return timestamp;
     }
-
+    public AnnounceAckAckPacket getAckAck(){
+        return new AnnounceAckAckPacket();
+    }
     public AnnounceAckPacket(String nickName, String password, long timestamp) {
         this.nickName = nickName;
         this.password = password;
