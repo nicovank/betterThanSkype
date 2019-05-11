@@ -38,33 +38,33 @@ public class RoomCreationRequestPacket extends Packet {
 
     public static RoomCreationRequestPacket parse(byte[] data) throws InvalidPacketFormatException {
         ByteBuffer buffer = ByteBuffer.wrap(data);
-        if (buffer.remaining() < 8) {
-            throw new InvalidPacketFormatException("Received invalid CREATEROOM packet.");
-        }
 
-        byte unlength = buffer.get();
-        if (unlength <= 0 || unlength > 32 || unlength > buffer.remaining() - 6) {
-            throw new InvalidPacketFormatException("Received invalid CREATEROOM packet.");
-        }
+        if (buffer.remaining() == 0) throw new InvalidPacketFormatException("Received invalid CREATEROOM packet.");
 
-        byte[] userName = new byte[unlength];
+        byte nlength = buffer.get();
+        if (nlength > buffer.remaining() || nlength <= 0 || nlength > 32)
+            throw new InvalidPacketFormatException("Received invalid CREATEROOM packet.");
+
+        byte[] userName = new byte[nlength];
         buffer.get(userName);
 
+        if (buffer.remaining() == 0) throw new InvalidPacketFormatException("Received invalid CREATEROOM packet.");
         byte rnlength = buffer.get();
-        if (rnlength < 0 || rnlength > 32 || rnlength > buffer.remaining() - 5) {
+        if (rnlength > buffer.remaining() || rnlength <= 0 || rnlength > 32)
             throw new InvalidPacketFormatException("Received invalid CREATEROOM packet.");
-        }
 
         byte[] roomName = new byte[rnlength];
         buffer.get(roomName);
 
+        if (buffer.remaining() < 4) throw new InvalidPacketFormatException("Received invalid CREATEROOM packet.");
         int plength = buffer.getInt();
-        if (plength < 0 || plength > 512 || plength > buffer.remaining() - 1) {
+        if (plength > buffer.remaining() || plength < 0 || plength > 512)
             throw new InvalidPacketFormatException("Received invalid CREATEROOM packet.");
-        }
 
         byte[] password = new byte[plength];
         buffer.get(password);
+
+        if (buffer.remaining() != 1) throw new InvalidPacketFormatException("Received invalid CREATEROOM packet.");
 
         byte type = buffer.get();
 
