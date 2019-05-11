@@ -6,6 +6,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 public final class JoinRoomSuccessPacket extends Packet {
 
@@ -43,38 +44,42 @@ public final class JoinRoomSuccessPacket extends Packet {
         return type;
     }
 
-    // TODO this needs to be fixed. I have changed the serialize function. See README for documentation.
     public static JoinRoomSuccessPacket parse(byte[] data) throws InvalidPacketFormatException {
-        ByteBuffer buff = ByteBuffer.wrap(data);
+        ByteBuffer buffer = ByteBuffer.wrap(data);
 
-        if (data.length == 0) {
-            throw new InvalidPacketFormatException("Received invalid CRSUC packet.");
-        }
 
-        byte nlength = buff.get();
-        if (nlength > buff.remaining() - 7 || nlength > 32 || nlength <= 0) {
-            throw new InvalidPacketFormatException("Received invalid CRSUC packet.");
-        }
+        if (!buffer.hasRemaining()) throw new InvalidPacketFormatException("Received invalid JOINSUC packet.");
+        byte nlength = buffer.get();
+        if (nlength > buffer.remaining() || nlength <= 0 || nlength > 32)
+            throw new InvalidPacketFormatException("Received invalid JOINSUC packet.");
         byte[] name = new byte[nlength];
-        buff.get(name);
+        buffer.get(name);
 
-        byte pwlength = buff.get();
-        if (pwlength > buff.remaining() - 6 || pwlength > 32 || pwlength <= 0) {
-            throw new InvalidPacketFormatException("Received invalid CRSUC packet.");
-        }
-        byte[] secret = new byte[pwlength];
-        buff.get(secret);
 
-        byte iplength = buff.get();
-        if (pwlength > buff.remaining() - 5 || pwlength > 32 || pwlength <= 0) {
-            throw new InvalidPacketFormatException("Received invalid CRSUC packet.");
-        }
+        if (buffer.remaining() < 4) throw new InvalidPacketFormatException("Received invalid JOINSUC packet.");
+        int slength = buffer.getInt();
+        if (slength > buffer.remaining() || slength < 0 || slength > 512)
+            throw new InvalidPacketFormatException("Received invalid JOINSUC packet.");
+        byte[] secret = new byte[slength];
+        buffer.get(secret);
+
+
+        if (!buffer.hasRemaining()) throw new InvalidPacketFormatException("Received invalid JOINSUC packet.");
+        byte type = buffer.get();
+
+
+        if (!buffer.hasRemaining()) throw new InvalidPacketFormatException("Received invalid JOINSUC packet.");
+        byte iplength = buffer.get();
+        if (iplength > buffer.remaining() || iplength <= 0)
+            throw new InvalidPacketFormatException("Received invalid JOINSUC packet.");
         byte[] ip = new byte[iplength];
-        buff.get(ip);
+        buffer.get(ip);
 
-        int port = buff.getInt();
 
-        byte type = buff.get();
+        if (buffer.remaining() != 4) throw new InvalidPacketFormatException("Received invalid JOINSUC packet.");
+        int port = buffer.getInt();
+
+
 
         try {
             return new JoinRoomSuccessPacket(
@@ -116,11 +121,17 @@ public final class JoinRoomSuccessPacket extends Packet {
 
     @Override
     public int hashCode() {
-        return name.hashCode();
+        return Objects.hash(name, secret, type, ip, port);
     }
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof JoinRoomSuccessPacket && ((JoinRoomSuccessPacket) other).name.equals(this.name);
+        if (!(other instanceof JoinRoomSuccessPacket)) return false;
+        JoinRoomSuccessPacket o = (JoinRoomSuccessPacket) other;
+        return o.name.equals(this.name)
+                && o.secret.equals(this.secret)
+                && o.type == this.type
+                && o.ip.equals(this.ip)
+                && o.port == this.port;
     }
 }
