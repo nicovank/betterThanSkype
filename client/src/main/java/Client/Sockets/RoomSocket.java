@@ -146,10 +146,12 @@ public class RoomSocket implements IRoomSocket,Runnable{
             case Constants.OPCODE.MRCS:
                 SuccessfulMulticastRoomCreationPacket s = (SuccessfulMulticastRoomCreationPacket) packet;
                 //handle room stuff
+                currentMulticastAddress=s.getIP();
                 Main.getInstance().getEventNode().fireEvent(new RoomResponseEvent(RoomResponseEvent.CREATE_ROOM,true,s.getName()));
                 break;
             case Constants.OPCODE.JOINSUC:
                 JoinRoomSuccessPacket j = (JoinRoomSuccessPacket) packet;
+                currentMulticastAddress=j.getIp();
                 Main.getInstance().getEventNode().fireEvent(new RoomResponseEvent(RoomResponseEvent.JOIN_ROOM,true,j.getName()));
                 break;
         }
