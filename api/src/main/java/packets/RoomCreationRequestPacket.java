@@ -40,7 +40,7 @@ public class RoomCreationRequestPacket extends Packet {
         ByteBuffer buffer = ByteBuffer.wrap(data);
 
 
-        if (buffer.remaining() == 0) throw new InvalidPacketFormatException("Received invalid CREATEROOM packet.");
+        if (!buffer.hasRemaining()) throw new InvalidPacketFormatException("Received invalid CREATEROOM packet.");
         byte nlength = buffer.get();
         if (nlength > buffer.remaining() || nlength <= 0 || nlength > 32)
             throw new InvalidPacketFormatException("Received invalid CREATEROOM packet.");
@@ -48,7 +48,7 @@ public class RoomCreationRequestPacket extends Packet {
         buffer.get(userName);
 
 
-        if (buffer.remaining() == 0) throw new InvalidPacketFormatException("Received invalid CREATEROOM packet.");
+        if (!buffer.hasRemaining()) throw new InvalidPacketFormatException("Received invalid CREATEROOM packet.");
         byte rnlength = buffer.get();
         if (rnlength > buffer.remaining() || rnlength <= 0 || rnlength > 32)
             throw new InvalidPacketFormatException("Received invalid CREATEROOM packet.");

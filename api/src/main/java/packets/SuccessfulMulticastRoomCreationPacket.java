@@ -64,8 +64,9 @@ public final class SuccessfulMulticastRoomCreationPacket extends Packet {
         buffer.get(ip);
 
 
-        if (buffer.remaining() < 4) throw new InvalidPacketFormatException("Received invalid MRCS packet.");
+        if (buffer.remaining() != 4) throw new InvalidPacketFormatException("Received invalid MRCS packet.");
         int port = buffer.getInt();
+
 
 
         try {
