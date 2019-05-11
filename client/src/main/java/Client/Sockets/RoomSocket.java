@@ -143,7 +143,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
     private void handleServerPacket(Packet packet){
         //handle all packets a client should be expected to recieve from the server.
         switch (packet.getOperationCode()) {
-            case Constants.OPCODE.CRSUC:
+            case Constants.OPCODE.MRCS:
                 SuccessfulMulticastRoomCreationPacket s = (SuccessfulMulticastRoomCreationPacket) packet;
                 //handle room stuff
                 Main.getInstance().getEventNode().fireEvent(new RoomResponseEvent(RoomResponseEvent.CREATE_ROOM,true,s.getName()));
@@ -251,7 +251,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
         RoomCreationRequestPacket creationRequestPacket = new RoomCreationRequestPacket(room,username,password,Constants.TYPE.UNICAST);
         DatagramPacket packet = creationRequestPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER);
         IO_QUEUE.offer(packet);
-        SuccessfulRoomCreationPacket suc = new SuccessfulRoomCreationPacket(room,password,SERVER_ADDRESS,Constants.PORTS.SERVER,Constants.TYPE.UNICAST);
+        SuccessfulMulticastRoomCreationPacket suc = new SuccessfulMulticastRoomCreationPacket(room,password,SERVER_ADDRESS,Constants.PORTS.SERVER);
         ExpectedPacket ex = new ExpectedPacket(suc,TIME_STAMP.get(),creationRequestPacket);
         EXPECTED_PACKETS.add(ex);
         TIME_STAMP.getAndIncrement();
@@ -327,9 +327,9 @@ public class RoomSocket implements IRoomSocket,Runnable{
                 case Constants.OPCODE.ANNACKACK:{
                     return true;
                 }
-                case Constants.OPCODE.CRSUC:{
-                    SuccessfulRoomCreationPacket as = (SuccessfulRoomCreationPacket) a;
-                    SuccessfulRoomCreationPacket bs = (SuccessfulRoomCreationPacket) b;
+                case Constants.OPCODE.MRCS:{
+                    SuccessfulMulticastRoomCreationPacket as = (SuccessfulMulticastRoomCreationPacket) a;
+                    SuccessfulMulticastRoomCreationPacket bs = (SuccessfulMulticastRoomCreationPacket) b;
 
                     return as.equals(bs);
                 }
