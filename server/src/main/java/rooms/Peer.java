@@ -4,9 +4,9 @@ import utils.Address;
 
 import java.util.Objects;
 
-public class Peer {
-    private String nickname;
-    private Address address;
+public final class Peer {
+    private final String nickname;
+    private final Address address;
 
     public Peer(String nickname, Address address) {
         this.nickname = nickname;
@@ -23,11 +23,11 @@ public class Peer {
 
     @Override
     public int hashCode() {
-        return Objects.hash(nickname, address);
+        return nickname.hashCode();
     }
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof Peer && ((Peer) other).address.equals(this.address) && ((Peer) other).nickname.equals(this.nickname);
+        return other instanceof Peer && ((Peer) other).nickname.equals(this.nickname);
     }
 }

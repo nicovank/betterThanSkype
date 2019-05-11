@@ -39,18 +39,15 @@ public final class PublicKeyPacket extends Packet {
     public static PublicKeyPacket parse(byte[] data) throws InvalidPacketFormatException {
         ByteBuffer buffer = ByteBuffer.wrap(data);
 
-        if (buffer.remaining() < 4) {
-            throw new InvalidPacketFormatException("Received invalid PUB packet.");
-        }
 
+        if (buffer.remaining() < 4) throw new InvalidPacketFormatException("Received invalid PUB packet.");
         int length = buffer.getInt();
-
-        if (length > buffer.remaining() || length < 0 || length > 900) {
-            throw new InvalidPacketFormatException("Received invalid PUB packet.");
-        }
-
+        if (length != buffer.remaining()) throw new InvalidPacketFormatException("Received invalid PUB packet.");
         byte[] pub = new byte[length];
         buffer.get(pub);
+
+
+
         return new PublicKeyPacket(pub);
     }
 

@@ -144,7 +144,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
         //handle all packets a client should be expected to recieve from the server.
         switch (packet.getOperationCode()) {
             case Constants.OPCODE.CRSUC:
-                SuccessfulRoomCreationPacket s = (SuccessfulRoomCreationPacket) packet;
+                SuccessfulMulticastRoomCreationPacket s = (SuccessfulMulticastRoomCreationPacket) packet;
                 //handle room stuff
                 Main.getInstance().getEventNode().fireEvent(new RoomResponseEvent(RoomResponseEvent.CREATE_ROOM,true,s.getName()));
                 break;
@@ -259,7 +259,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
 
     @Override
     public void attemptToJoinRoom(String room, String username, String password) {
-        JoinRoomPacket joinRequestPacket = new JoinRoomPacket(room,username,password,Constants.TYPE.UNICAST);
+        JoinRoomRequestPacket joinRequestPacket = new JoinRoomRequestPacket(room,username,password,Constants.TYPE.UNICAST);
         DatagramPacket packet = joinRequestPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER);
         JoinRoomSuccessPacket succ = new JoinRoomSuccessPacket(username,password,SERVER_ADDRESS,Constants.PORTS.SERVER,Constants.TYPE.UNICAST);
         ExpectedPacket ex = new ExpectedPacket(succ,TIME_STAMP.get(),joinRequestPacket);
