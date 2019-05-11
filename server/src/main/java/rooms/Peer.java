@@ -23,11 +23,11 @@ public final class Peer {
 
     @Override
     public int hashCode() {
-        return Objects.hash(nickname, address);
+        return nickname.hashCode();
     }
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof Peer && ((Peer) other).address.equals(this.address) && ((Peer) other).nickname.equals(this.nickname);
+        return other instanceof Peer && ((Peer) other).nickname.equals(this.nickname);
     }
 }

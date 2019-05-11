@@ -33,8 +33,16 @@ public final class PacketHandler extends Thread {
 
     @Override
     public void run() {
-        for (;;) {
-            handle();
+        for (; ; ) {
+            try {
+                try {
+                    handle();
+                } catch (HandleException e) {
+                    outbound.offer(e.getErrorPacket());
+                }
+            } catch (CryptoException ignored) {
+
+            }
         }
     }
 
@@ -43,7 +51,7 @@ public final class PacketHandler extends Thread {
      * The server then decides to act on the client's request, and adds a response packet on the outbound queue if
      * needed.
      */
-    public void handle() {
+    public void handle() throws HandleException, CryptoException {
         Pair<Packet, Address> pair = inbound.poll();
         if (pair == null) return;
 
@@ -64,15 +72,16 @@ public final class PacketHandler extends Thread {
             PublicKey pub = dictionary.get(address);
             if (pub == null) {
                 // We do not know the client's public key, and therefore cannot process their request.
-                Packet response = new ErrorPacket(Constants.ERROR_CODE.UNKNOWNPUBLICKEY);
-                outbound.offer(response.getDatagramPacket(address));
-            } else switch (packet.getOperationCode()) {
+                throw new HandleException(address, Constants.ERROR_CODE.UNKNOWNPUBLICKEY);
+            }
+
+            switch (packet.getOperationCode()) {
 
                 case Constants.OPCODE.CREATEROOM:
-                    RoomCreationRequestPacket request = (RoomCreationRequestPacket) packet;
-                    if (request.getType() == Constants.TYPE.MULTICAST) {
-                        Peer creator = new Peer(request.getUserName(), address);
-                        MulticastRoom room = new MulticastRoom(request.getRoomName(), request.getPassword(), Address.randomMulticastGroup());
+                    RoomCreationRequestPacket rcr = (RoomCreationRequestPacket) packet;
+                    if (rcr.getType() == Constants.TYPE.MULTICAST) {
+                        Peer creator = new Peer(rcr.getUserName(), address);
+                        MulticastRoom room = new MulticastRoom(rcr.getRoomName(), rcr.getPassword(), Address.randomMulticastGroup());
                         room.addPeer(creator);
 
                         if (room.equals(rooms.putIfAbsent(room.getName(), room))) {
@@ -84,11 +93,9 @@ public final class PacketHandler extends Thread {
                                     room.getPort()
                             );
 
-                            try {
-                                outbound.offer(response.getDatagramPacket(address, pub));
-                            } catch (CryptoException ignored) {
-
-                            }
+                            outbound.offer(response.getDatagramPacket(address, pub));
+                        } else {
+                            throw new HandleException(address, pub, Constants.ERROR_CODE.CREATEERROR, "A room named '%s' already exists.", rcr.getRoomName());
                         }
                     } else {
                         // TODO SEND ERROR PACKET (UNICAST NOT SUPPORTED YET)
@@ -96,7 +103,34 @@ public final class PacketHandler extends Thread {
                     break;
 
                 case Constants.OPCODE.JOINREQ:
-                    // TODO WHEN A JOIN ROOM PACKET EXISTS
+                    JoinRoomRequestPacket jrr = (JoinRoomRequestPacket) packet;
+                    Room room = rooms.get(jrr.getRoomName());
+
+                    if (room == null) {
+                        throw new HandleException(address, pub, Constants.ERROR_CODE.JOINERROR, "There is no room named '%s'.", jrr.getRoomName());
+                    }
+
+                    if (!room.getPassword().equals(jrr.getPassword())) {
+                        throw new HandleException(address, pub, Constants.ERROR_CODE.JOINERROR, "Incorrect password.");
+                    }
+
+                    if (!room.addPeer(new Peer(jrr.getUserName(), address))) {
+                        throw new HandleException(address, pub, Constants.ERROR_CODE.JOINERROR, "Ths nickname is already used by someone.");
+                    }
+
+                    if (room.getType() == Constants.TYPE.MULTICAST) {
+                        MulticastRoom mroom = (MulticastRoom) room;
+                        outbound.offer(new JoinRoomSuccessPacket(
+                                mroom.getName(),
+                                mroom.getSecret(),
+                                mroom.getIP(),
+                                mroom.getPort(),
+                                mroom.getType()
+                        ).getDatagramPacket(address, pub));
+                    } else {
+                        // TODO SEND UNICAST NOT SUPPORTED ERROR.
+                    }
+
                     break;
 
                 case Constants.OPCODE.LEAVEROOM:
