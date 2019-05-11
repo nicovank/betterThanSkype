@@ -143,13 +143,15 @@ public class RoomSocket implements IRoomSocket,Runnable{
     private void handleServerPacket(Packet packet){
         //handle all packets a client should be expected to recieve from the server.
         switch (packet.getOperationCode()) {
-            case Constants.OPCODE.CRSUC:
+            case Constants.OPCODE.MRCS:
                 SuccessfulMulticastRoomCreationPacket s = (SuccessfulMulticastRoomCreationPacket) packet;
                 //handle room stuff
+                currentMulticastAddress=s.getIP();
                 Main.getInstance().getEventNode().fireEvent(new RoomResponseEvent(RoomResponseEvent.CREATE_ROOM,true,s.getName()));
                 break;
             case Constants.OPCODE.JOINSUC:
                 JoinRoomSuccessPacket j = (JoinRoomSuccessPacket) packet;
+                currentMulticastAddress=j.getIp();
                 Main.getInstance().getEventNode().fireEvent(new RoomResponseEvent(RoomResponseEvent.JOIN_ROOM,true,j.getName()));
                 break;
         }
@@ -248,10 +250,10 @@ public class RoomSocket implements IRoomSocket,Runnable{
     //IMPORTANT ALL OF THESE MESSAGES SHOULD END WITH SENDING A PACKET TO IOQUEUE AND INCREMENTING TIME_STAMP
     @Override
     public void attemptToCreateRoom(String room, String username, String password) {
-        RoomCreationRequestPacket creationRequestPacket = new RoomCreationRequestPacket(room,username,password,Constants.TYPE.UNICAST);
+        RoomCreationRequestPacket creationRequestPacket = new RoomCreationRequestPacket(room,username,password,Constants.TYPE.MULTICAST);
         DatagramPacket packet = creationRequestPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER);
         IO_QUEUE.offer(packet);
-        SuccessfulRoomCreationPacket suc = new SuccessfulRoomCreationPacket(room,password,SERVER_ADDRESS,Constants.PORTS.SERVER,Constants.TYPE.UNICAST);
+        SuccessfulMulticastRoomCreationPacket suc = new SuccessfulMulticastRoomCreationPacket(room,password,SERVER_ADDRESS,Constants.PORTS.SERVER);
         ExpectedPacket ex = new ExpectedPacket(suc,TIME_STAMP.get(),creationRequestPacket);
         EXPECTED_PACKETS.add(ex);
         TIME_STAMP.getAndIncrement();
@@ -259,9 +261,9 @@ public class RoomSocket implements IRoomSocket,Runnable{
 
     @Override
     public void attemptToJoinRoom(String room, String username, String password) {
-        JoinRoomRequestPacket joinRequestPacket = new JoinRoomRequestPacket(room,username,password,Constants.TYPE.UNICAST);
+        JoinRoomRequestPacket joinRequestPacket = new JoinRoomRequestPacket(room,username,password,Constants.TYPE.MULTICAST);
         DatagramPacket packet = joinRequestPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER);
-        JoinRoomSuccessPacket succ = new JoinRoomSuccessPacket(username,password,SERVER_ADDRESS,Constants.PORTS.SERVER,Constants.TYPE.UNICAST);
+        JoinRoomSuccessPacket succ = new JoinRoomSuccessPacket(username,password,SERVER_ADDRESS,Constants.PORTS.SERVER,Constants.TYPE.MULTICAST);
         ExpectedPacket ex = new ExpectedPacket(succ,TIME_STAMP.get(),joinRequestPacket);
         EXPECTED_PACKETS.add(ex);
         IO_QUEUE.offer(packet);
@@ -271,7 +273,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
 
     @Override
     public long sendToEveryone(String message, String password) {
-        MessagePacket messagePacket = new MessagePacket(message,password,Constants.TYPE.UNICAST);
+        MessagePacket messagePacket = new MessagePacket(message,password,Constants.TYPE.MULTICAST);
         DatagramPacket packet = messagePacket.getDatagramPacket(currentMulticastAddress,Constants.PORTS.SERVER);
         packet.setPort(Constants.PORTS.CLIENT);
         MessageAckPacket ex = messagePacket.createAck();
@@ -327,9 +329,9 @@ public class RoomSocket implements IRoomSocket,Runnable{
                 case Constants.OPCODE.ANNACKACK:{
                     return true;
                 }
-                case Constants.OPCODE.CRSUC:{
-                    SuccessfulRoomCreationPacket as = (SuccessfulRoomCreationPacket) a;
-                    SuccessfulRoomCreationPacket bs = (SuccessfulRoomCreationPacket) b;
+                case Constants.OPCODE.MRCS:{
+                    SuccessfulMulticastRoomCreationPacket as = (SuccessfulMulticastRoomCreationPacket) a;
+                    SuccessfulMulticastRoomCreationPacket bs = (SuccessfulMulticastRoomCreationPacket) b;
 
                     return as.equals(bs);
                 }
