@@ -1,14 +1,15 @@
 package rooms;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class Room {
 
-    private String secret;
-    private Map<String, Peer> peers;
-    private String password;
-    private String name;
+    private final String name;
+    private final String password;
+    private final String secret;
+    private final Map<String, Peer> peers;
 
 
     public Room(String name, String password) {
@@ -19,6 +20,8 @@ public abstract class Room {
         peers = new ConcurrentHashMap<>();
     }
 
+    public abstract byte getType();
+
     /**
      * Adds a new peer to the room, provided it does not contain a peer with that nickname yet.
      *
@@ -26,8 +29,7 @@ public abstract class Room {
      * @return true if the add was successful, else false.
      */
     public boolean addPeer(Peer p) {
-        peers.putIfAbsent(p.getNickname(), p);
-        Peer q = peers.get(p.getNickname());
+        Peer q = peers.putIfAbsent(p.getNickname(), p);
         return p.equals(q);
     }
 
@@ -61,5 +63,17 @@ public abstract class Room {
 
     public String getSecret() {
         return secret;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, password, secret, peers);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (!(other instanceof Room)) return false;
+        Room room = (Room) other;
+        return room.name.equals(this.name) && room.password.equals(this.password) && room.secret.equals(this.secret) && room.peers.equals(this.peers);
     }
 }

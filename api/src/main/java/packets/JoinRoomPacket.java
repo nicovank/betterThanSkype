@@ -11,27 +11,23 @@ public class JoinRoomPacket extends Packet {
     private final String userName;
     private final String roomName;
     private final String password;
-    private final byte type;
 
     public String getUserName() {
         return userName;
     }
 
-    public String getRoomName() { return roomName; }
+    public String getRoomName() {
+        return roomName;
+    }
 
     public String getPassword() {
         return password;
-    }
-
-    public byte getType() {
-        return type;
     }
 
     public JoinRoomPacket(String userName, String roomName, String password, byte type) {
         this.userName = userName;
         this.roomName = roomName;
         this.password = password;
-        this.type = type;
     }
 
     public static JoinRoomPacket parse(byte[] data) throws InvalidPacketFormatException {
@@ -49,11 +45,11 @@ public class JoinRoomPacket extends Packet {
         buffer.get(userName);
 
         byte rnlength = buffer.get();
-        if(rnlength < 0 || rnlength > 32 || rnlength > buffer.remaining() - 5){
+        if (rnlength < 0 || rnlength > 32 || rnlength > buffer.remaining() - 5) {
             throw new InvalidPacketFormatException("Received invalid CREATEROOM packet.");
         }
 
-        byte [] roomName = new byte[rnlength];
+        byte[] roomName = new byte[rnlength];
         buffer.get(roomName);
 
         int plength = buffer.getInt();
@@ -84,11 +80,10 @@ public class JoinRoomPacket extends Packet {
 
         buffer.put((byte) userName.length);
         buffer.put(userName);
-        buffer.put((byte)roomName.length);
+        buffer.put((byte) roomName.length);
         buffer.put(roomName);
         buffer.putInt(password.length);
         buffer.put(password);
-        buffer.put(this.type);
 
         return buffer.array();
     }
@@ -100,16 +95,15 @@ public class JoinRoomPacket extends Packet {
 
     @Override
     public int hashCode() {
-        return Objects.hash(userName, roomName, password, type);
+        return Objects.hash(userName, roomName, password);
     }
 
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof JoinRoomPacket)) return false;
         JoinRoomPacket o = (JoinRoomPacket) other;
-        return o.userName.equals(this.userName)
-                && o.roomName.equals(this.roomName)
-                && o.password.equals(this.password)
-                && o.type == this.type;
+        return o.userName.equals(this.userName) &&
+                o.roomName.equals(this.roomName) &&
+                o.password.equals(this.password);
     }
 }

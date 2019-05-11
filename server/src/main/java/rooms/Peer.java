@@ -4,9 +4,9 @@ import utils.Address;
 
 import java.util.Objects;
 
-public class Peer {
-    private String nickname;
-    private Address address;
+public final class Peer {
+    private final String nickname;
+    private final Address address;
 
     public Peer(String nickname, Address address) {
         this.nickname = nickname;

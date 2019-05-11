@@ -77,8 +77,8 @@ public abstract class Packet {
         byte[] packet = Arrays.copyOfRange(data, 1, data.length);
 
         switch (data[0]) {
-            case Constants.OPCODE.CRSUC:
-                return SuccessfulRoomCreationPacket.parse(packet);
+            case Constants.OPCODE.MRCS:
+                return SuccessfulMulticastRoomCreationPacket.parse(packet);
             case Constants.OPCODE.ERROR:
                 return ErrorPacket.parse(packet);
             case Constants.OPCODE.PUB:
