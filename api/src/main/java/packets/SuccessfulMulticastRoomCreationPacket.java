@@ -6,6 +6,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 public final class SuccessfulMulticastRoomCreationPacket extends Packet {
 
@@ -107,11 +108,16 @@ public final class SuccessfulMulticastRoomCreationPacket extends Packet {
 
     @Override
     public int hashCode() {
-        return name.hashCode();
+        return Objects.hash(name, secret, ip, port);
     }
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof SuccessfulMulticastRoomCreationPacket && ((SuccessfulMulticastRoomCreationPacket) other).name.equals(this.name);
+        if (!(other instanceof SuccessfulMulticastRoomCreationPacket)) return false;
+        SuccessfulMulticastRoomCreationPacket o = (SuccessfulMulticastRoomCreationPacket) other;
+        return o.name.equals(this.name)
+                && o.secret.equals(this.secret)
+                && o.ip.equals(this.ip)
+                && o.port == this.port;
     }
 }

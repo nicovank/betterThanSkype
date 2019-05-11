@@ -226,7 +226,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
 
     @Override
     public void attemptToJoinRoom(String room, String username, String password) {
-        JoinRoomPacket joinRequestPacket = new JoinRoomPacket(room,username,password,Constants.TYPE.UNICAST);
+        JoinRoomRequestPacket joinRequestPacket = new JoinRoomRequestPacket(room,username,password,Constants.TYPE.UNICAST);
         DatagramPacket packet = joinRequestPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER);
         IO_QUEUE.offer(packet);
         TIME_STAMP.getAndIncrement();
