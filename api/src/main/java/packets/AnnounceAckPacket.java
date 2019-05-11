@@ -23,7 +23,9 @@ public class AnnounceAckPacket extends Packet {
     public long getTimestamp() {
         return timestamp;
     }
-
+    public AnnounceAckAckPacket getAckAck(){
+        return new AnnounceAckAckPacket();
+    }
     public AnnounceAckPacket(String nickName, String password, long timestamp) {
         this.nickName = nickName;
         this.password = password;
@@ -77,6 +79,11 @@ public class AnnounceAckPacket extends Packet {
     @Override
     public byte getOperationCode() {
         return Constants.OPCODE.ANNACK;
+    }
+    public boolean equals(Object other) {
+        if (!(other instanceof MessagePacket)) return false;
+        AnnounceAckPacket o = (AnnounceAckPacket) other;
+        return o.nickName.equals(this.nickName) && o.password.equals(this.password) && o.timestamp==this.timestamp;
     }
 }
 /*
