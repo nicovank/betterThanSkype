@@ -64,9 +64,9 @@ public class JoinRoomRequestPacket extends Packet {
         byte[] password = new byte[plength];
         buffer.get(password);
 
+
         if (buffer.remaining() != 1) throw new InvalidPacketFormatException("Received invalid JOINREQ packet.");
         byte type = buffer.get();
-
 
 
         return new JoinRoomRequestPacket(
