@@ -248,7 +248,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
     //IMPORTANT ALL OF THESE MESSAGES SHOULD END WITH SENDING A PACKET TO IOQUEUE AND INCREMENTING TIME_STAMP
     @Override
     public void attemptToCreateRoom(String room, String username, String password) {
-        RoomCreationRequestPacket creationRequestPacket = new RoomCreationRequestPacket(room,username,password,Constants.TYPE.UNICAST);
+        RoomCreationRequestPacket creationRequestPacket = new RoomCreationRequestPacket(room,username,password,Constants.TYPE.MULTICAST);
         DatagramPacket packet = creationRequestPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER);
         IO_QUEUE.offer(packet);
         SuccessfulMulticastRoomCreationPacket suc = new SuccessfulMulticastRoomCreationPacket(room,password,SERVER_ADDRESS,Constants.PORTS.SERVER);
@@ -259,9 +259,9 @@ public class RoomSocket implements IRoomSocket,Runnable{
 
     @Override
     public void attemptToJoinRoom(String room, String username, String password) {
-        JoinRoomRequestPacket joinRequestPacket = new JoinRoomRequestPacket(room,username,password,Constants.TYPE.UNICAST);
+        JoinRoomRequestPacket joinRequestPacket = new JoinRoomRequestPacket(room,username,password,Constants.TYPE.MULTICAST);
         DatagramPacket packet = joinRequestPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER);
-        JoinRoomSuccessPacket succ = new JoinRoomSuccessPacket(username,password,SERVER_ADDRESS,Constants.PORTS.SERVER,Constants.TYPE.UNICAST);
+        JoinRoomSuccessPacket succ = new JoinRoomSuccessPacket(username,password,SERVER_ADDRESS,Constants.PORTS.SERVER,Constants.TYPE.MULTICAST);
         ExpectedPacket ex = new ExpectedPacket(succ,TIME_STAMP.get(),joinRequestPacket);
         EXPECTED_PACKETS.add(ex);
         IO_QUEUE.offer(packet);
@@ -271,7 +271,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
 
     @Override
     public long sendToEveryone(String message, String password) {
-        MessagePacket messagePacket = new MessagePacket(message,password,Constants.TYPE.UNICAST);
+        MessagePacket messagePacket = new MessagePacket(message,password,Constants.TYPE.MULTICAST);
         DatagramPacket packet = messagePacket.getDatagramPacket(currentMulticastAddress,Constants.PORTS.SERVER);
         packet.setPort(Constants.PORTS.CLIENT);
         MessageAckPacket ex = messagePacket.createAck();
