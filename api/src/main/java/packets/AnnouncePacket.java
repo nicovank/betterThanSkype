@@ -22,17 +22,16 @@ public class AnnouncePacket extends Packet {
         }
 
         byte nlength = buff.get();
-        if (nlength <= 0 || nlength > 32 || nlength > buff.remaining() - 5) {
+        if (nlength <= 0 || nlength > 32 || nlength > buff.remaining() - 3) {
             throw new InvalidPacketFormatException("Received invalid ANNOUNCE packet.");
         }
 
         byte[] name = new byte[nlength];
         buff.get(name);
 
-        int plength = buff.getInt();
-        if(plength <=0 || plength > 512 || plength > buff.remaining() -1 ){
+        int plength = buff.get();
+        if(plength <=0 || plength > 512 || plength > buff.remaining()){
             throw new InvalidPacketFormatException("Received invalid ANNOUNCE packet.");
-
         }
         byte[] pass = new byte[plength];
         buff.get(pass);
@@ -45,7 +44,7 @@ public class AnnouncePacket extends Packet {
         byte[] name = this.nickName.getBytes(StandardCharsets.UTF_8);
         byte[] password = this.password.getBytes(StandardCharsets.UTF_8);
 
-        ByteBuffer buff = ByteBuffer.allocate(name.length + password.length + 5);
+        ByteBuffer buff = ByteBuffer.allocate(name.length + password.length + 2);
 
         buff.put((byte) name.length);
         buff.put(name);
@@ -78,6 +77,7 @@ public class AnnouncePacket extends Packet {
     public String getNickName() {
         return nickName;
     }
+    public String getPassword() { return password; }
 }
 
 

@@ -18,11 +18,10 @@ public class AnnounceAckPacket extends Packet {
         return password;
     }
 
-
-
     public long getTimestamp() {
         return timestamp;
     }
+
     public AnnounceAckAckPacket getAckAck(){
         return new AnnounceAckAckPacket();
     }
@@ -46,7 +45,7 @@ public class AnnounceAckPacket extends Packet {
         byte[] name = new byte[nlength];
         buff.get(name);
 
-        int plength = buff.getInt();
+        int plength = buff.get();
         if(plength <=0 || plength > 512 || plength > buff.remaining() -8 ){
             throw new InvalidPacketFormatException("Received invalid ANNOUNCE packet.");
 
@@ -66,7 +65,7 @@ public class AnnounceAckPacket extends Packet {
         byte[] name = this.nickName.getBytes(StandardCharsets.UTF_8);
         byte[] password = this.password.getBytes(StandardCharsets.UTF_8);
 
-        ByteBuffer buff = ByteBuffer.allocate(name.length + password.length + 13);
+        ByteBuffer buff = ByteBuffer.allocate(name.length + password.length + 10);
 
         buff.put((byte) name.length);
         buff.put(name);
