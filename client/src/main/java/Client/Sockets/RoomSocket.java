@@ -4,6 +4,7 @@ import Client.Events.*;
 import Client.Main;
 import crypto.CryptoException;
 import crypto.RSA;
+import javafx.application.Platform;
 import packets.*;
 import utils.Address;
 import utils.Constants;
@@ -11,6 +12,8 @@ import java.io.IOException;
 import java.net.*;
 import java.security.PublicKey;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -71,6 +74,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
         TIME_STAMP = new AtomicLong(0);
     }
 
+    @Override
     public void run() {
         try{
             SERVER_SOCKET.setSoTimeout(100);
@@ -84,9 +88,8 @@ public class RoomSocket implements IRoomSocket,Runnable{
             //always send before receiving
 
             //This section handles timeouts, if an expected packet is not received .5s after it is supposed to, the packet is resent
-            for (ExpectedPacket ex: EXPECTED_PACKETS
-            ) {
-                if((System.nanoTime()-ex.getTimestamp()) > 500000000){
+            for (ExpectedPacket ex: EXPECTED_PACKETS) {
+                if((System.nanoTime()-ex.getTime()) > 500000000L){
                         if (ex.getPacket().getOperationCode()<8) {
                             IO_QUEUE.offer(ex.getOriginal().getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER));
                         } else  {
@@ -113,16 +116,19 @@ public class RoomSocket implements IRoomSocket,Runnable{
                 byte[] bytes = new byte[Constants.MAX_PACKET_SIZE];
                 DatagramPacket packet = new DatagramPacket(bytes,bytes.length);
                 SERVER_SOCKET.receive(packet);
-                Packet p = Packet.parse(packet.getData(),KEYS); //TODO is encryption correct?
-                for (ExpectedPacket ex :EXPECTED_PACKETS
-                ) {
+                Packet p = Packet.parse(Arrays.copyOf(packet.getData(), packet.getLength()),KEYS); //TODO is encryption correct?
+                Queue<ExpectedPacket> q = new LinkedList<>();
+                for (ExpectedPacket ex :EXPECTED_PACKETS) {
                     if(checkPacketEquality(p,ex.getPacket())){
-                        EXPECTED_PACKETS.remove(ex);
+                        q.add(ex);
                     }
                 }
+                q.forEach(EXPECTED_PACKETS::remove);
                 handleServerPacket(p);
-            } catch (IOException | InvalidPacketFormatException | CryptoException e) {
+            } catch(SocketTimeoutException e){
 
+            } catch (IOException| InvalidPacketFormatException | CryptoException e) {
+                    e.printStackTrace();
             }
 
             //handle Client packet if there is one.
@@ -152,12 +158,16 @@ public class RoomSocket implements IRoomSocket,Runnable{
                 SuccessfulMulticastRoomCreationPacket s = (SuccessfulMulticastRoomCreationPacket) packet;
                 //handle room stuff
                 currentMulticastAddress=s.getIP();
-                Main.getInstance().getEventNode().fireEvent(new RoomResponseEvent(RoomResponseEvent.CREATE_ROOM,true,s.getName()));
+                Platform.runLater(()->
+                    Main.getInstance().getEventNode().fireEvent(new RoomResponseEvent(RoomResponseEvent.CREATE_ROOM,true,s.getName()))
+                );
                 break;
             case Constants.OPCODE.JOINSUC:
                 JoinRoomSuccessPacket j = (JoinRoomSuccessPacket) packet;
                 currentMulticastAddress=j.getIp();
-                Main.getInstance().getEventNode().fireEvent(new RoomResponseEvent(RoomResponseEvent.JOIN_ROOM,true,j.getName()));
+                Platform.runLater(()->
+                    Main.getInstance().getEventNode().fireEvent(new RoomResponseEvent(RoomResponseEvent.JOIN_ROOM,true,j.getName()))
+                );
                 break;
         }
     }
@@ -197,7 +207,9 @@ public class RoomSocket implements IRoomSocket,Runnable{
         ExpectedPacket ex = new ExpectedPacket(ackPacket.getAckAck(),TIME_STAMP.get(),ackPacket);
         EXPECTED_PACKETS.offer(ex);
         IO_QUEUE.offer(ackPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER));
-        Main.getInstance().getEventNode().fireEvent(new UserEvent(UserEvent.JOIN_EVENT, packet.getNickName()));
+        Platform.runLater(()->
+            Main.getInstance().getEventNode().fireEvent(new UserEvent(UserEvent.JOIN_EVENT, packet.getNickName()))
+        );
     }
 
     private void handleAnnouncementAck(AnnounceAckPacket packet){
@@ -223,7 +235,9 @@ public class RoomSocket implements IRoomSocket,Runnable{
 
         //create message
         Message m = new Message(packet.getMessage(),packet.getNickName(),timestamp);
-        Main.getInstance().getEventNode().fireEvent(new MessageReceivedEvent(MessageReceivedEvent.MESSAGE_EVENT,m));
+        Platform.runLater(()->
+            Main.getInstance().getEventNode().fireEvent(new MessageReceivedEvent(MessageReceivedEvent.MESSAGE_EVENT,m))
+        );
 
         //TODO timer if ack isn't received fast enough.
     }
@@ -236,7 +250,9 @@ public class RoomSocket implements IRoomSocket,Runnable{
 
     private void handleLeaveRoom(LeaveRoomPacket packet){
         TIME_STAMP.getAndIncrement();
-        Main.getInstance().getEventNode().fireEvent(new UserEvent(UserEvent.LEAVE_EVENT, packet.getNickname()));
+        Platform.runLater(()->
+        Main.getInstance().getEventNode().fireEvent(new UserEvent(UserEvent.LEAVE_EVENT, packet.getNickname()))
+        );
     }
 
     private void handleKeepAlive(KeepAlivePacket packet){
@@ -303,14 +319,16 @@ public class RoomSocket implements IRoomSocket,Runnable{
     public void addToSendList(String nickName, Address address) {
         //TODO implement still needs to persist username/addresses
         TIME_STAMP.getAndIncrement();
-        Main.getInstance().getEventNode().fireEvent(new UserEvent(UserEvent.JOIN_EVENT,nickName));
+        Platform.runLater(()->
+        Main.getInstance().getEventNode().fireEvent(new UserEvent(UserEvent.JOIN_EVENT,nickName)));
     }
 
     @Override
     public void removeFromSendList(String nickName) {
         //TODO implement still needs to persist username/addresses
         TIME_STAMP.getAndIncrement();
-        Main.getInstance().getEventNode().fireEvent(new UserEvent(UserEvent.LEAVE_EVENT,nickName));
+        Platform.runLater(()->
+        Main.getInstance().getEventNode().fireEvent(new UserEvent(UserEvent.LEAVE_EVENT,nickName)));
     }
 
     /**

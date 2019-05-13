@@ -12,6 +12,7 @@ import utils.Constants;
 import utils.Pair;
 
 import java.net.DatagramPacket;
+import java.net.UnknownHostException;
 import java.security.PublicKey;
 import java.util.Map;
 import java.util.Queue;
@@ -39,6 +40,8 @@ public final class PacketHandler extends Thread {
                     handle();
                 } catch (HandleException e) {
                     outbound.offer(e.getErrorPacket());
+                } catch (Exception ignored) {
+
                 }
             } catch (CryptoException ignored) {
 
@@ -51,7 +54,7 @@ public final class PacketHandler extends Thread {
      * The server then decides to act on the client's request, and adds a response packet on the outbound queue if
      * needed.
      */
-    public void handle() throws HandleException, CryptoException {
+    public void handle() throws HandleException, CryptoException, UnknownHostException {
         Pair<Packet, Address> pair = inbound.poll();
         if (pair == null) return;
 
@@ -63,7 +66,7 @@ public final class PacketHandler extends Thread {
                 PublicKey pub = ((PublicKeyPacket) packet).getPublicKey();
                 dictionary.put(address, pub);
                 Packet response = new PublicKeyPacket(rsa.getPublicKey());
-                DatagramPacket payload = response.getDatagramPacket(address, pub);
+                DatagramPacket payload = response.getDatagramPacket(address);
                 outbound.offer(payload);
             } catch (CryptoException ignored) {
 
@@ -94,6 +97,7 @@ public final class PacketHandler extends Thread {
                             );
 
                             outbound.offer(response.getDatagramPacket(address, pub));
+                            System.out.println("Added new SuccessfulMulticastRoomCreationPacket on queue.");
                         } else {
                             throw new HandleException(address, pub, Constants.ERROR_CODE.CREATEERROR, "A room named '%s' already exists.", rcr.getRoomName());
                         }
@@ -127,6 +131,7 @@ public final class PacketHandler extends Thread {
                                 mroom.getPort(),
                                 mroom.getType()
                         ).getDatagramPacket(address, pub));
+                        System.out.println("Added new JoinRoomSuccessPacket on queue.");
                     } else {
                         // TODO SEND UNICAST NOT SUPPORTED ERROR.
                     }

@@ -37,6 +37,7 @@ public class LoginController implements IEnterRoom {
      */
     public LoginController() throws IOException, CryptoException {
         roomSocket = new RoomSocket();
+        new Thread((Runnable) roomSocket).start();
     }
 
     /**

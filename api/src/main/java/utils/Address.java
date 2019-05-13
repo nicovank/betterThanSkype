@@ -1,6 +1,7 @@
 package utils;
 
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Objects;
 
 public final class Address {
@@ -12,8 +13,8 @@ public final class Address {
         this.port = port;
     }
 
-    public static Address randomMulticastGroup() {
-        throw new UnsupportedOperationException();
+    public static Address randomMulticastGroup() throws UnknownHostException {
+        return new Address(InetAddress.getByName("224.1.1.13"), 7896);
     }
 
     public InetAddress getAddress() {

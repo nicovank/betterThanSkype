@@ -9,7 +9,7 @@ import javafx.event.EventType;
  */
 public class MessageReceivedEvent extends Event {
     private Message message;
-    public static final EventType<MessageReceivedEvent> MESSAGE_EVENT = new EventType<>(ANY);
+    public static final EventType<MessageReceivedEvent> MESSAGE_EVENT = new EventType<>("MESSAGE_EVENT");
     public MessageReceivedEvent(EventType<? extends Event> eventType,Message message) {
         super(eventType);
         this.message = message;

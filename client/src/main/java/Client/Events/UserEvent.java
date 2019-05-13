@@ -8,8 +8,8 @@ import javafx.event.EventType;
  * @author Jim Spagnola
  */
 public class UserEvent extends Event {
-    public static final EventType<UserEvent> JOIN_EVENT = new EventType<>(ANY);
-    public static final EventType<UserEvent> LEAVE_EVENT = new EventType<>(ANY);
+    public static final EventType<UserEvent> JOIN_EVENT = new EventType<>("JOIN_EVENT");
+    public static final EventType<UserEvent> LEAVE_EVENT = new EventType<>("LEAVE_EVENT");
     private String username;
     public UserEvent(EventType<? extends Event> eventType, String username) {
         super(eventType);

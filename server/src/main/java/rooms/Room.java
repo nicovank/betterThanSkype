@@ -74,6 +74,6 @@ public abstract class Room {
     public boolean equals(Object other) {
         if (!(other instanceof Room)) return false;
         Room room = (Room) other;
-        return room.name.equals(this.name) && room.password.equals(this.password) && room.secret.equals(this.secret) && room.peers.equals(this.peers);
+        return room.name.equals(this.name);
     }
 }
