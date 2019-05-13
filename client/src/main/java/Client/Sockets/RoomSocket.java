@@ -15,6 +15,12 @@ import java.util.Arrays;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * this method handles sending and receiving packets from the the server and clients.
+ * this includes encryption and firing events.
+ * @author Jim Spagnola
+ * @author Nick Esposito
+ */
 public class RoomSocket implements IRoomSocket,Runnable{
     private final InetAddress SERVER_ADDRESS;
     private final DatagramSocket SERVER_SOCKET;
@@ -192,7 +198,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
         ExpectedPacket ex = new ExpectedPacket(ackPacket.getAckAck(),TIME_STAMP.get(),ackPacket);
         EXPECTED_PACKETS.add(ex);
         IO_QUEUE.offer(ackPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER));
-        Main.getInstance().getEventNode().fireEvent(new UserJoinedEvent(UserJoinedEvent.JOIN_EVENT, packet.getNickName()));
+        Main.getInstance().getEventNode().fireEvent(new UserEvent(UserEvent.JOIN_EVENT, packet.getNickName()));
     }
 
     private void handleAnnouncementAck(AnnounceAckPacket packet){
@@ -231,7 +237,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
 
     private void handleLeaveRoom(LeaveRoomPacket packet){
         TIME_STAMP.getAndIncrement();
-        Main.getInstance().getEventNode().fireEvent(new UserLeftEvent(UserLeftEvent.LEAVE_EVENT, packet.getNickname()));
+        Main.getInstance().getEventNode().fireEvent(new UserEvent(UserEvent.LEAVE_EVENT, packet.getNickname()));
     }
 
     private void handleKeepAlive(KeepAlivePacket packet){
@@ -298,14 +304,14 @@ public class RoomSocket implements IRoomSocket,Runnable{
     public void addToSendList(String nickName, Address address) {
         //TODO implement still needs to persist username/addresses
         TIME_STAMP.getAndIncrement();
-        Main.getInstance().getEventNode().fireEvent(new UserJoinedEvent(UserJoinedEvent.JOIN_EVENT,nickName));
+        Main.getInstance().getEventNode().fireEvent(new UserEvent(UserEvent.JOIN_EVENT,nickName));
     }
 
     @Override
     public void removeFromSendList(String nickName) {
         //TODO implement still needs to persist username/addresses
         TIME_STAMP.getAndIncrement();
-        Main.getInstance().getEventNode().fireEvent(new UserLeftEvent(UserLeftEvent.LEAVE_EVENT,nickName));
+        Main.getInstance().getEventNode().fireEvent(new UserEvent(UserEvent.LEAVE_EVENT,nickName));
     }
 
     /**
