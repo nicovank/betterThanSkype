@@ -39,6 +39,7 @@ public final class PacketHandler extends Thread {
                 try {
                     handle();
                 } catch (HandleException e) {
+                    System.out.println("Adding an ErrorPacket with code " + e.getCode() + " to the queue, with message \"" + e.getMessage() + "\".");
                     outbound.offer(e.getErrorPacket());
                 } catch (Exception ignored) {
 
@@ -87,8 +88,11 @@ public final class PacketHandler extends Thread {
                         MulticastRoom room = new MulticastRoom(rcr.getRoomName(), rcr.getPassword(), Address.randomMulticastGroup());
                         room.addPeer(creator);
 
-                        if (room.equals(rooms.putIfAbsent(room.getName(), room))) {
+                        if (rooms.containsKey(room.getName())) {
+                            throw new HandleException(address, pub, Constants.ERROR_CODE.CREATEERROR, "A room named '%s' already exists.", rcr.getRoomName());
+                        } else {
                             // the creation of the room was successful
+                            rooms.put(room.getName(), room);
                             Packet response = new SuccessfulMulticastRoomCreationPacket(
                                     room.getName(),
                                     room.getSecret(),
@@ -98,8 +102,6 @@ public final class PacketHandler extends Thread {
 
                             outbound.offer(response.getDatagramPacket(address, pub));
                             System.out.println("Added new SuccessfulMulticastRoomCreationPacket on queue.");
-                        } else {
-                            throw new HandleException(address, pub, Constants.ERROR_CODE.CREATEERROR, "A room named '%s' already exists.", rcr.getRoomName());
                         }
                     } else {
                         // TODO SEND ERROR PACKET (UNICAST NOT SUPPORTED YET)

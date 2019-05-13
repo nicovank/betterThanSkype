@@ -12,9 +12,16 @@ import java.security.PublicKey;
 public class HandleException extends Exception {
 
     private byte code;
-    private String message;
     private Address address;
     private PublicKey key;
+
+    public byte getCode() {
+        return code;
+    }
+
+    public boolean hasMessage() {
+        return super.getMessage() == null;
+    }
 
     public HandleException(Address address, PublicKey key, byte code) {
         this(address, key, code, null);
@@ -45,14 +52,14 @@ public class HandleException extends Exception {
     }
 
     public HandleException(Address address, PublicKey key, byte code, String format, Object... args) {
+        super(((format == null) ? null : String.format(format, args)));
         this.code = code;
-        this.message = ((format == null) ? null : String.format(format, args));
         this.address = address;
         this.key = key;
     }
 
     public DatagramPacket getErrorPacket() throws CryptoException {
-        Packet packet = new ErrorPacket(code, message);
+        Packet packet = new ErrorPacket(code, super.getMessage());
 
         if (key != null) {
             return packet.getDatagramPacket(address, key);

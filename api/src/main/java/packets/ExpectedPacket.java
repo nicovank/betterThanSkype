@@ -1,5 +1,7 @@
 package packets;
 
+import java.util.Objects;
+
 public class ExpectedPacket {
     private long time;
     private long timestamp;
@@ -23,10 +25,22 @@ public class ExpectedPacket {
         return packet;
     }
 
-    public ExpectedPacket(Packet packet,long timestamp,Packet original){
-        this.packet=packet;
+    public ExpectedPacket(Packet packet, long timestamp, Packet original) {
+        this.packet = packet;
         this.timestamp = timestamp;
         this.original = original;
-        time=System.nanoTime();
+        time = System.nanoTime();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(time, timestamp, packet);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (!(other instanceof ExpectedPacket)) return false;
+        ExpectedPacket o = (ExpectedPacket) other;
+        return o.time == this.time && o.timestamp == this.timestamp && packet.equals(o.packet) && original.equals(o.original);
     }
 }

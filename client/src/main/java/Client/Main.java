@@ -64,4 +64,9 @@ public class Main extends Application {
         stage.setTitle(window.getTitle());
         stage.show();
     }
+
+    @Override
+    public void stop() {
+        System.exit(0);
+    }
 }

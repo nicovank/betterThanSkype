@@ -8,6 +8,7 @@ import javafx.application.Platform;
 import packets.*;
 import utils.Address;
 import utils.Constants;
+
 import java.io.IOException;
 import java.net.*;
 import java.security.PublicKey;
@@ -20,10 +21,11 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * this method handles sending and receiving packets from the the server and clients.
  * this includes encryption and firing events.
+ *
  * @author Jim Spagnola
  * @author Nick Esposito
  */
-public class RoomSocket implements IRoomSocket,Runnable{
+public class RoomSocket implements IRoomSocket, Runnable {
     private final InetAddress SERVER_ADDRESS;
     private final DatagramSocket SERVER_SOCKET;
     private final MulticastSocket CLIENT_SOCKET;
@@ -49,15 +51,15 @@ public class RoomSocket implements IRoomSocket,Runnable{
         //inform our Server of our existence.
         PublicKeyPacket prPacket = new PublicKeyPacket(OUR_KEY);
         byte[] bytes = new byte[Constants.MAX_PACKET_SIZE];
-        DatagramPacket sendPacket = prPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER);
+        DatagramPacket sendPacket = prPacket.getDatagramPacket(SERVER_ADDRESS, Constants.PORTS.SERVER);
         SERVER_SOCKET.send(sendPacket);
 
         //Get ack and key from server
         boolean successfulServerAck = false;
-        DatagramPacket receivePacket= new DatagramPacket(bytes,bytes.length);
+        DatagramPacket receivePacket = new DatagramPacket(bytes, bytes.length);
         Packet p = null;
 
-        while(!successfulServerAck) {
+        while (!successfulServerAck) {
             SERVER_SOCKET.receive(receivePacket);
             try {
                 p = Packet.parse(Arrays.copyOf(receivePacket.getData(), receivePacket.getLength()));
@@ -76,7 +78,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
 
     @Override
     public void run() {
-        try{
+        try {
             SERVER_SOCKET.setSoTimeout(100);
             CLIENT_SOCKET.setSoTimeout(100);
         } catch (SocketException e) {
@@ -84,20 +86,20 @@ public class RoomSocket implements IRoomSocket,Runnable{
             return;
         }
 
-        while(!Thread.interrupted()){
+        while (!Thread.interrupted()) {
             //always send before receiving
 
             //This section handles timeouts, if an expected packet is not received .5s after it is supposed to, the packet is resent
-            for (ExpectedPacket ex: EXPECTED_PACKETS) {
-                if((System.nanoTime()-ex.getTime()) > 500000000L){
-                        if (ex.getPacket().getOperationCode()<8) {
-                            IO_QUEUE.offer(ex.getOriginal().getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER));
-                        } else  {
-                            IO_QUEUE.offer(ex.getOriginal().getDatagramPacket(currentMulticastAddress,Constants.PORTS.CLIENT));
-                        }
+            for (ExpectedPacket ex : EXPECTED_PACKETS) {
+                if ((System.nanoTime() - ex.getTime()) > 500000000L) {
+                    if (ex.getPacket().getOperationCode() < 8) {
+                        IO_QUEUE.offer(ex.getOriginal().getDatagramPacket(SERVER_ADDRESS, Constants.PORTS.SERVER));
+                    } else {
+                        IO_QUEUE.offer(ex.getOriginal().getDatagramPacket(currentMulticastAddress, Constants.PORTS.CLIENT));
+                    }
                 }
             }
-            while(!IO_QUEUE.isEmpty()){
+            while (!IO_QUEUE.isEmpty()) {
                 DatagramPacket packet = IO_QUEUE.poll();
                 try {
                     if (packet.getPort() == Constants.PORTS.SERVER) {
@@ -112,34 +114,34 @@ public class RoomSocket implements IRoomSocket,Runnable{
 
             //handle Server packet if there is one.
             //Server requests are the priority
-            try{
+            try {
                 byte[] bytes = new byte[Constants.MAX_PACKET_SIZE];
-                DatagramPacket packet = new DatagramPacket(bytes,bytes.length);
+                DatagramPacket packet = new DatagramPacket(bytes, bytes.length);
                 SERVER_SOCKET.receive(packet);
-                Packet p = Packet.parse(Arrays.copyOf(packet.getData(), packet.getLength()),KEYS); //TODO is encryption correct?
+                Packet p = Packet.parse(Arrays.copyOf(packet.getData(), packet.getLength()), KEYS); //TODO is encryption correct?
                 Queue<ExpectedPacket> q = new LinkedList<>();
-                for (ExpectedPacket ex :EXPECTED_PACKETS) {
-                    if(checkPacketEquality(p,ex.getPacket())){
+                for (ExpectedPacket ex : EXPECTED_PACKETS) {
+                    if (p.equals(ex.getPacket())) {
                         q.add(ex);
                     }
                 }
                 q.forEach(EXPECTED_PACKETS::remove);
                 handleServerPacket(p);
-            } catch(SocketTimeoutException e){
+            } catch (SocketTimeoutException e) {
 
-            } catch (IOException| InvalidPacketFormatException | CryptoException e) {
-                    e.printStackTrace();
+            } catch (IOException | InvalidPacketFormatException | CryptoException e) {
+                e.printStackTrace();
             }
 
             //handle Client packet if there is one.
-            try{
+            try {
                 byte[] bytes = new byte[Constants.MAX_PACKET_SIZE];
-                DatagramPacket packet = new DatagramPacket(bytes,bytes.length);
+                DatagramPacket packet = new DatagramPacket(bytes, bytes.length);
                 CLIENT_SOCKET.receive(packet);         //TODO encryption?
                 Packet p = Packet.parse(packet.getData());
-                for (ExpectedPacket ex :EXPECTED_PACKETS
-                     ) {
-                    if(checkPacketEquality(p,ex.getPacket())){
+                for (ExpectedPacket ex : EXPECTED_PACKETS
+                ) {
+                    if (checkPacketEquality(p, ex.getPacket())) {
                         EXPECTED_PACKETS.remove(ex);
                     }
                 }
@@ -151,27 +153,28 @@ public class RoomSocket implements IRoomSocket,Runnable{
         }
     }
 
-    private void handleServerPacket(Packet packet){
+    private void handleServerPacket(Packet packet) {
         //handle all packets a client should be expected to recieve from the server.
         switch (packet.getOperationCode()) {
             case Constants.OPCODE.MRCS:
                 SuccessfulMulticastRoomCreationPacket s = (SuccessfulMulticastRoomCreationPacket) packet;
                 //handle room stuff
-                currentMulticastAddress=s.getIP();
-                Platform.runLater(()->
-                    Main.getInstance().getEventNode().fireEvent(new RoomResponseEvent(RoomResponseEvent.CREATE_ROOM,true,s.getName()))
+                currentMulticastAddress = s.getIP();
+                Platform.runLater(() ->
+                        Main.getInstance().getEventNode().fireEvent(new RoomResponseEvent(RoomResponseEvent.CREATE_ROOM, true, s.getName()))
                 );
                 break;
             case Constants.OPCODE.JOINSUC:
                 JoinRoomSuccessPacket j = (JoinRoomSuccessPacket) packet;
-                currentMulticastAddress=j.getIp();
-                Platform.runLater(()->
-                    Main.getInstance().getEventNode().fireEvent(new RoomResponseEvent(RoomResponseEvent.JOIN_ROOM,true,j.getName()))
+                currentMulticastAddress = j.getIp();
+                Platform.runLater(() ->
+                        Main.getInstance().getEventNode().fireEvent(new RoomResponseEvent(RoomResponseEvent.JOIN_ROOM, true, j.getName()))
                 );
                 break;
         }
     }
-    private void handleClientPacket(Packet packet){
+
+    private void handleClientPacket(Packet packet) {
         //handle all packets a client should be expected to receive
         switch (packet.getOperationCode()) {
             case Constants.OPCODE.ANNOUNCE:
@@ -187,7 +190,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
                 handleMessage((MessagePacket) packet);
                 break;
             case Constants.OPCODE.MESSAGEACK:
-                handleMessageAck((MessageAckPacket)packet);
+                handleMessageAck((MessageAckPacket) packet);
                 break;
             case Constants.OPCODE.LEAVEROOM:
                 handleLeaveRoom((LeaveRoomPacket) packet);
@@ -201,21 +204,21 @@ public class RoomSocket implements IRoomSocket,Runnable{
         }
     }
 
-    private void handleAnnouncement(AnnouncePacket packet){
+    private void handleAnnouncement(AnnouncePacket packet) {
         TIME_STAMP.getAndIncrement();
         AnnounceAckPacket ackPacket = packet.createAck(TIME_STAMP.get());
-        ExpectedPacket ex = new ExpectedPacket(ackPacket.getAckAck(),TIME_STAMP.get(),ackPacket);
+        ExpectedPacket ex = new ExpectedPacket(ackPacket.getAckAck(), TIME_STAMP.get(), ackPacket);
         EXPECTED_PACKETS.offer(ex);
-        IO_QUEUE.offer(ackPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER));
-        Platform.runLater(()->
-            Main.getInstance().getEventNode().fireEvent(new UserEvent(UserEvent.JOIN_EVENT, packet.getNickName()))
+        IO_QUEUE.offer(ackPacket.getDatagramPacket(SERVER_ADDRESS, Constants.PORTS.SERVER));
+        Platform.runLater(() ->
+                Main.getInstance().getEventNode().fireEvent(new UserEvent(UserEvent.JOIN_EVENT, packet.getNickName()))
         );
     }
 
-    private void handleAnnouncementAck(AnnounceAckPacket packet){
+    private void handleAnnouncementAck(AnnounceAckPacket packet) {
         TIME_STAMP.getAndIncrement();
         AnnounceAckAckPacket ackPacket = new AnnounceAckAckPacket();
-        IO_QUEUE.offer(ackPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER));
+        IO_QUEUE.offer(ackPacket.getDatagramPacket(SERVER_ADDRESS, Constants.PORTS.SERVER));
         //TODO handle not receiving packet for a long time needing a resend.
     }
 
@@ -225,44 +228,45 @@ public class RoomSocket implements IRoomSocket,Runnable{
         //TODO nothing? terminate waiting condition for handleAnnouncementAck
     }
 
-    private void handleMessage(MessagePacket packet){
+    private void handleMessage(MessagePacket packet) {
 
         MessageAckPacket ackPacket = packet.createAck();
-        IO_QUEUE.offer(ackPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER));
+        IO_QUEUE.offer(ackPacket.getDatagramPacket(SERVER_ADDRESS, Constants.PORTS.SERVER));
 
         //resolve timeStamp
-        long timestamp = Math.max(TIME_STAMP.getAndIncrement(),packet.getTimestamp());
+        long timestamp = Math.max(TIME_STAMP.getAndIncrement(), packet.getTimestamp());
 
         //create message
-        Message m = new Message(packet.getMessage(),packet.getNickName(),timestamp);
-        Platform.runLater(()->
-            Main.getInstance().getEventNode().fireEvent(new MessageReceivedEvent(MessageReceivedEvent.MESSAGE_EVENT,m))
+        Message m = new Message(packet.getMessage(), packet.getNickName(), timestamp);
+        Platform.runLater(() ->
+                Main.getInstance().getEventNode().fireEvent(new MessageReceivedEvent(MessageReceivedEvent.MESSAGE_EVENT, m))
         );
 
         //TODO timer if ack isn't received fast enough.
     }
 
-    private void handleMessageAck(MessageAckPacket packet){
+    private void handleMessageAck(MessageAckPacket packet) {
         TIME_STAMP.getAndIncrement();
 
         //TODO nothing? break timer for ack packet.
     }
 
-    private void handleLeaveRoom(LeaveRoomPacket packet){
+    private void handleLeaveRoom(LeaveRoomPacket packet) {
         TIME_STAMP.getAndIncrement();
-        Platform.runLater(()->
-        Main.getInstance().getEventNode().fireEvent(new UserEvent(UserEvent.LEAVE_EVENT, packet.getNickname()))
+        Platform.runLater(() ->
+                Main.getInstance().getEventNode().fireEvent(new UserEvent(UserEvent.LEAVE_EVENT, packet.getNickname()))
         );
     }
 
-    private void handleKeepAlive(KeepAlivePacket packet){
+    private void handleKeepAlive(KeepAlivePacket packet) {
         TIME_STAMP.getAndIncrement();
         KeepAliveAckPacket ackPacket = new KeepAliveAckPacket();
-        IO_QUEUE.offer(ackPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER));
+        IO_QUEUE.offer(ackPacket.getDatagramPacket(SERVER_ADDRESS, Constants.PORTS.SERVER));
 
         //TODO handle logistics for this
     }
-    private void handleKeepAliveAck(KeepAliveAckPacket packet){
+
+    private void handleKeepAliveAck(KeepAliveAckPacket packet) {
         TIME_STAMP.getAndIncrement();
 
         //TODO nothing?
@@ -271,21 +275,21 @@ public class RoomSocket implements IRoomSocket,Runnable{
     //IMPORTANT ALL OF THESE MESSAGES SHOULD END WITH SENDING A PACKET TO IOQUEUE AND INCREMENTING TIME_STAMP
     @Override
     public void attemptToCreateRoom(String room, String username, String password) {
-        RoomCreationRequestPacket creationRequestPacket = new RoomCreationRequestPacket(room,username,password,Constants.TYPE.MULTICAST);
-        DatagramPacket packet = creationRequestPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER);
+        RoomCreationRequestPacket creationRequestPacket = new RoomCreationRequestPacket(room, username, password, Constants.TYPE.MULTICAST);
+        DatagramPacket packet = creationRequestPacket.getDatagramPacket(SERVER_ADDRESS, Constants.PORTS.SERVER);
         IO_QUEUE.offer(packet);
-        SuccessfulMulticastRoomCreationPacket suc = new SuccessfulMulticastRoomCreationPacket(room,password,SERVER_ADDRESS,Constants.PORTS.SERVER);
-        ExpectedPacket ex = new ExpectedPacket(suc,TIME_STAMP.get(),creationRequestPacket);
+        SuccessfulMulticastRoomCreationPacket suc = new SuccessfulMulticastRoomCreationPacket(room, password, SERVER_ADDRESS, Constants.PORTS.SERVER);
+        ExpectedPacket ex = new ExpectedPacket(suc, TIME_STAMP.get(), creationRequestPacket);
         EXPECTED_PACKETS.offer(ex);
         TIME_STAMP.getAndIncrement();
     }
 
     @Override
-    public void attemptToJoinRoom(String room, String username, String password) {
-        JoinRoomRequestPacket joinRequestPacket = new JoinRoomRequestPacket(room,username,password,Constants.TYPE.MULTICAST);
-        DatagramPacket packet = joinRequestPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER);
-        JoinRoomSuccessPacket succ = new JoinRoomSuccessPacket(username,password,SERVER_ADDRESS,Constants.PORTS.SERVER,Constants.TYPE.MULTICAST);
-        ExpectedPacket ex = new ExpectedPacket(succ,TIME_STAMP.get(),joinRequestPacket);
+    public void attemptToJoinRoom(String username, String room, String password) {
+        JoinRoomRequestPacket joinRequestPacket = new JoinRoomRequestPacket(username, room, password, Constants.TYPE.MULTICAST);
+        DatagramPacket packet = joinRequestPacket.getDatagramPacket(SERVER_ADDRESS, Constants.PORTS.SERVER);
+        JoinRoomSuccessPacket succ = new JoinRoomSuccessPacket(room, password, SERVER_ADDRESS, Constants.PORTS.SERVER, Constants.TYPE.MULTICAST);
+        ExpectedPacket ex = new ExpectedPacket(succ, TIME_STAMP.get(), joinRequestPacket);
         EXPECTED_PACKETS.offer(ex);
         IO_QUEUE.offer(packet);
         TIME_STAMP.getAndIncrement();
@@ -294,11 +298,11 @@ public class RoomSocket implements IRoomSocket,Runnable{
 
     @Override
     public long sendToEveryone(String message, String password) {
-        MessagePacket messagePacket = new MessagePacket(message,password,Constants.TYPE.MULTICAST);
-        DatagramPacket packet = messagePacket.getDatagramPacket(currentMulticastAddress,Constants.PORTS.SERVER);
+        MessagePacket messagePacket = new MessagePacket(message, password, Constants.TYPE.MULTICAST);
+        DatagramPacket packet = messagePacket.getDatagramPacket(currentMulticastAddress, Constants.PORTS.SERVER);
         packet.setPort(Constants.PORTS.CLIENT);
         MessageAckPacket ex = messagePacket.createAck();
-        ExpectedPacket expectedPacket = new ExpectedPacket(ex,TIME_STAMP.get(),messagePacket);
+        ExpectedPacket expectedPacket = new ExpectedPacket(ex, TIME_STAMP.get(), messagePacket);
         EXPECTED_PACKETS.offer(expectedPacket);
         //packet.setAddress("0.0.0.0"); //TODO get MULTICAST IP if needed.
         IO_QUEUE.offer(packet);
@@ -308,9 +312,9 @@ public class RoomSocket implements IRoomSocket,Runnable{
     @Override
     public void sendLeavingMessage(String username, String roomname) {
         LeaveRoomPacket packet = new LeaveRoomPacket(username, roomname);
-        DatagramPacket clientPacket = packet.getDatagramPacket(currentMulticastAddress,Constants.PORTS.SERVER);
+        DatagramPacket clientPacket = packet.getDatagramPacket(currentMulticastAddress, Constants.PORTS.SERVER);
         LeaveRoomPacket packet2 = new LeaveRoomPacket(username, roomname);
-        DatagramPacket serverPacket = packet2.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER);
+        DatagramPacket serverPacket = packet2.getDatagramPacket(SERVER_ADDRESS, Constants.PORTS.SERVER);
         IO_QUEUE.offer(clientPacket);
         IO_QUEUE.offer(serverPacket);
     }
@@ -319,58 +323,59 @@ public class RoomSocket implements IRoomSocket,Runnable{
     public void addToSendList(String nickName, Address address) {
         //TODO implement still needs to persist username/addresses
         TIME_STAMP.getAndIncrement();
-        Platform.runLater(()->
-        Main.getInstance().getEventNode().fireEvent(new UserEvent(UserEvent.JOIN_EVENT,nickName)));
+        Platform.runLater(() ->
+                Main.getInstance().getEventNode().fireEvent(new UserEvent(UserEvent.JOIN_EVENT, nickName)));
     }
 
     @Override
     public void removeFromSendList(String nickName) {
         //TODO implement still needs to persist username/addresses
         TIME_STAMP.getAndIncrement();
-        Platform.runLater(()->
-        Main.getInstance().getEventNode().fireEvent(new UserEvent(UserEvent.LEAVE_EVENT,nickName)));
+        Platform.runLater(() ->
+                Main.getInstance().getEventNode().fireEvent(new UserEvent(UserEvent.LEAVE_EVENT, nickName)));
     }
 
     /**
-     * @author Nick Esposito
-     * Used for checking packets from EXPECTED_PACKETS vs what was received
      * @param a Packet
      * @param b Packet
      * @return returns whether the packets are considered equal
+     * @author Nick Esposito
+     * Used for checking packets from EXPECTED_PACKETS vs what was received
      */
-    private boolean checkPacketEquality(Packet a, Packet b){
-        if(a.getOperationCode() != b.getOperationCode()){
+    private boolean checkPacketEquality(Packet a, Packet b) {
+        if (a.getOperationCode() != b.getOperationCode()) {
             return false;
-        }else{
-            switch (a.getOperationCode()){
-                case Constants.OPCODE.ANNACK:{
+        } else {
+            switch (a.getOperationCode()) {
+                case Constants.OPCODE.ANNACK: {
                     AnnounceAckPacket an = (AnnounceAckPacket) a;
                     AnnounceAckPacket bn = (AnnounceAckPacket) b;
 
                     return an.equals(bn);
                 }
-                case Constants.OPCODE.ANNACKACK:{
+                case Constants.OPCODE.ANNACKACK: {
                     return true;
                 }
-                case Constants.OPCODE.MRCS:{
+                case Constants.OPCODE.MRCS: {
                     SuccessfulMulticastRoomCreationPacket as = (SuccessfulMulticastRoomCreationPacket) a;
                     SuccessfulMulticastRoomCreationPacket bs = (SuccessfulMulticastRoomCreationPacket) b;
 
                     return as.equals(bs);
                 }
-                case Constants.OPCODE.JOINSUC:{
+                case Constants.OPCODE.JOINSUC: {
                     JoinRoomSuccessPacket aj = (JoinRoomSuccessPacket) a;
                     JoinRoomSuccessPacket bj = (JoinRoomSuccessPacket) b;
 
                     return aj.equals(bj);
                 }
-                case Constants.OPCODE.MESSAGEACK:{
-                    MessageAckPacket am =(MessageAckPacket) a;
+                case Constants.OPCODE.MESSAGEACK: {
+                    MessageAckPacket am = (MessageAckPacket) a;
                     MessageAckPacket bm = (MessageAckPacket) b;
 
                     return am.equals(bm);
                 }
-                default:return false;
+                default:
+                    return false;
             }
 
         }

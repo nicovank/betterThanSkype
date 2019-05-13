@@ -108,7 +108,7 @@ public class LoginController implements IEnterRoom {
     public void onJoinRoom(MouseEvent event){
         if(hasCorrectInput()){
             //and authentication for room
-            roomSocket.attemptToJoinRoom(roomNameLabel.getText(),nicknameField.getText(),passwordField.getText());
+            roomSocket.attemptToJoinRoom(nicknameField.getText(), roomNameLabel.getText(),passwordField.getText());
         }
     }
 

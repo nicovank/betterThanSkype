@@ -85,12 +85,26 @@ public abstract class Packet {
                 return PublicKeyPacket.parse(packet);
             case Constants.OPCODE.CREATEROOM:
                 return RoomCreationRequestPacket.parse(packet);
-//            case Constants.OPCODE.JOINSUC:
-//                return SuccessfulJoinPacket.parse(packet);
-//            case Constants.OPCODE.ANNOUNCE:
-//                return AnnouncePacket.parse(packet);
-//            case Constants.OPCODE.ANNACK:
-//                return AnnounceACKPacket.parse(packet);
+            case Constants.OPCODE.JOINREQ:
+                return JoinRoomRequestPacket.parse(packet);
+            case Constants.OPCODE.JOINSUC:
+                return JoinRoomSuccessPacket.parse(packet);
+            case Constants.OPCODE.ANNOUNCE:
+                return AnnouncePacket.parse(packet);
+            case Constants.OPCODE.ANNACK:
+                return AnnounceAckPacket.parse(packet);
+            case Constants.OPCODE.ANNACKACK:
+                return AnnounceAckAckPacket.parse(packet);
+            case Constants.OPCODE.MESSAGE:
+                return MessagePacket.parse(packet);
+            case Constants.OPCODE.MESSAGEACK:
+                return MessageAckPacket.parse(packet);
+            case Constants.OPCODE.KEEPALIVE:
+                return KeepAlivePacket.parse(packet);
+            case Constants.OPCODE.KEEPALIVEACK:
+                return KeepAliveAckPacket.parse(packet);
+            case Constants.OPCODE.LEAVEROOM:
+                return LeaveRoomPacket.parse(packet);
             default:
                 throw new InvalidPacketFormatException("The operation code " + data[0] + " was not recognized.");
         }
