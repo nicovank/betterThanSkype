@@ -4,12 +4,15 @@ import Client.Controllers.LoginController;
 import Client.Controllers.MessagingController;
 import Client.Events.*;
 import javafx.application.Application;
-import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.stage.Stage;
 import java.util.HashMap;
 
+/**
+ * this is the main javafx application, it handles creating the windows and handling custom events.
+ * @author Jim Spagnola
+ */
 public class Main extends Application {
     private HashMap<String, Window> scenes;
     private Stage stage;
@@ -28,6 +31,8 @@ public class Main extends Application {
         instance = this;
         scenes = new HashMap<>();
         this.stage = stage;
+
+        //load strings
         FXMLLoader messageLoader = new FXMLLoader(getClass().getResource("/fxml/messagingWindow.fxml"));
         FXMLLoader loginLoader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
         Window<MessagingController> messageWindow = new Window<>(messageLoader.load(),messageLoader.getController(),"Better Than Skype",600,400);
@@ -36,10 +41,11 @@ public class Main extends Application {
         scenes.put("Login",loginWindow);
         activate("Login");
 
+        //handle events
         eventNode = new EventNode();
         eventNode.addEventHandler(MessageReceivedEvent.MESSAGE_EVENT, messageReceivedEvent -> messageWindow.getController().receiveMessage(messageReceivedEvent));
-        eventNode.addEventHandler(UserJoinedEvent.JOIN_EVENT, joinEvent -> messageWindow.getController().userJoinedRoom(joinEvent));
-        eventNode.addEventHandler(UserLeftEvent.LEAVE_EVENT, leftEvent -> messageWindow.getController().userLeftRoom(leftEvent));
+        eventNode.addEventHandler(UserEvent.JOIN_EVENT, joinEvent -> messageWindow.getController().userJoinedRoom(joinEvent));
+        eventNode.addEventHandler(UserEvent.LEAVE_EVENT, leftEvent -> messageWindow.getController().userLeftRoom(leftEvent));
         eventNode.addEventHandler(RoomResponseEvent.CREATE_ROOM, createEvent -> loginWindow.getController().onNewRoomResponse(createEvent));
         eventNode.addEventHandler(RoomResponseEvent.JOIN_ROOM, joinEvent -> loginWindow.getController().onJoinRoomResponse(joinEvent));
     }

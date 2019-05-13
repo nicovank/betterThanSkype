@@ -3,6 +3,10 @@ package Client;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 
+/**
+ * this method handles the different windows for an application.
+ * @param <T> the type of Controller to be attached.
+ */
 public class Window<T> {
     private Scene scene;
     private T controller;
