@@ -53,6 +53,7 @@ public class LeaveRoomPacket extends Packet {
     public String getNickname() {
         return nickname;
     }
+    public String getRoomname() { return roomname; }
 }
 /*
           1           <= 32
