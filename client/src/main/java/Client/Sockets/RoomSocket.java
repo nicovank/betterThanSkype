@@ -10,7 +10,6 @@ import utils.Constants;
 import java.io.IOException;
 import java.net.*;
 import java.security.PublicKey;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
@@ -30,7 +29,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
     private final PublicKey SERVER_PUBLIC_KEY;
     private final ConcurrentLinkedQueue<DatagramPacket> IO_QUEUE;
     private final AtomicLong TIME_STAMP;
-    private final ArrayList<ExpectedPacket> EXPECTED_PACKETS;
+    private final ConcurrentLinkedQueue<ExpectedPacket> EXPECTED_PACKETS;
     private InetAddress currentMulticastAddress;
 
     public RoomSocket() throws IOException, CryptoException {
@@ -68,7 +67,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
 
         //concurrency setup
         IO_QUEUE = new ConcurrentLinkedQueue<>();
-        EXPECTED_PACKETS = new ArrayList<>();
+        EXPECTED_PACKETS = new ConcurrentLinkedQueue<>();
         TIME_STAMP = new AtomicLong(0);
     }
 
@@ -196,7 +195,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
         TIME_STAMP.getAndIncrement();
         AnnounceAckPacket ackPacket = packet.createAck(TIME_STAMP.get());
         ExpectedPacket ex = new ExpectedPacket(ackPacket.getAckAck(),TIME_STAMP.get(),ackPacket);
-        EXPECTED_PACKETS.add(ex);
+        EXPECTED_PACKETS.offer(ex);
         IO_QUEUE.offer(ackPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER));
         Main.getInstance().getEventNode().fireEvent(new UserEvent(UserEvent.JOIN_EVENT, packet.getNickName()));
     }
@@ -261,7 +260,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
         IO_QUEUE.offer(packet);
         SuccessfulMulticastRoomCreationPacket suc = new SuccessfulMulticastRoomCreationPacket(room,password,SERVER_ADDRESS,Constants.PORTS.SERVER);
         ExpectedPacket ex = new ExpectedPacket(suc,TIME_STAMP.get(),creationRequestPacket);
-        EXPECTED_PACKETS.add(ex);
+        EXPECTED_PACKETS.offer(ex);
         TIME_STAMP.getAndIncrement();
     }
 
@@ -271,7 +270,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
         DatagramPacket packet = joinRequestPacket.getDatagramPacket(SERVER_ADDRESS,Constants.PORTS.SERVER);
         JoinRoomSuccessPacket succ = new JoinRoomSuccessPacket(username,password,SERVER_ADDRESS,Constants.PORTS.SERVER,Constants.TYPE.MULTICAST);
         ExpectedPacket ex = new ExpectedPacket(succ,TIME_STAMP.get(),joinRequestPacket);
-        EXPECTED_PACKETS.add(ex);
+        EXPECTED_PACKETS.offer(ex);
         IO_QUEUE.offer(packet);
         TIME_STAMP.getAndIncrement();
         //TODO if timeout for ack, send failure.
@@ -284,7 +283,7 @@ public class RoomSocket implements IRoomSocket,Runnable{
         packet.setPort(Constants.PORTS.CLIENT);
         MessageAckPacket ex = messagePacket.createAck();
         ExpectedPacket expectedPacket = new ExpectedPacket(ex,TIME_STAMP.get(),messagePacket);
-        EXPECTED_PACKETS.add(expectedPacket);
+        EXPECTED_PACKETS.offer(expectedPacket);
         //packet.setAddress("0.0.0.0"); //TODO get MULTICAST IP if needed.
         IO_QUEUE.offer(packet);
         return TIME_STAMP.getAndIncrement();
