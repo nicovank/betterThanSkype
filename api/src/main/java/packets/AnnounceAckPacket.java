@@ -82,7 +82,7 @@ public class AnnounceAckPacket extends Packet {
     public boolean equals(Object other) {
         if (!(other instanceof MessagePacket)) return false;
         AnnounceAckPacket o = (AnnounceAckPacket) other;
-        return o.nickName.equals(this.nickName) && o.password.equals(this.password) && o.timestamp==this.timestamp;
+        return o.nickName.equals(this.nickName) && o.password.equals(this.password) ;// && o.timestamp==this.timestamp;
     }
 }
 /*

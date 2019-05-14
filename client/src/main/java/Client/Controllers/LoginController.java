@@ -73,6 +73,7 @@ public class LoginController implements IEnterRoom {
     public void onJoinRoomResponse(RoomResponseEvent event) {
         if(event.getResponse()){
             moveScene();
+            roomSocket.announce(nicknameField.getText(),passwordField.getText());
         } else{
             //TODO handle error informtion
             Alert errorAlert = new Alert(Alert.AlertType.ERROR);

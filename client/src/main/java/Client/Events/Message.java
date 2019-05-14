@@ -46,6 +46,6 @@ public final class Message implements Comparable<Message> {
     }
 
     public String getFullText(){
-        return username + "says: \""+ text + "\"";
+        return username + " says: \""+ text + "\"";
     }
 }

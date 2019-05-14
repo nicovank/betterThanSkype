@@ -107,6 +107,7 @@ public class RoomSocket implements IRoomSocket, Runnable {
                         SERVER_SOCKET.send(packet);
                     } else if (packet.getPort() == Constants.PORTS.CLIENT) {
                         CLIENT_SOCKET.send(packet);
+                        System.out.println("Sent to client opcode: " + packet.getData()[1]);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -140,13 +141,16 @@ public class RoomSocket implements IRoomSocket, Runnable {
                 DatagramPacket packet = new DatagramPacket(bytes, bytes.length);
                 CLIENT_SOCKET.receive(packet);         //TODO encryption?
                 Packet p = Packet.parse(packet.getData());
+                System.out.println("Received packet  " + p.getOperationCode());
                 Queue<ExpectedPacket> q = new LinkedList<>();
+                System.out.println(EXPECTED_PACKETS.size());
                 for (ExpectedPacket ex : EXPECTED_PACKETS) {
-                    if (p.equals(ex.getPacket())) {
+                    if (checkPacketEquality(p,ex.getPacket())) {
                         q.add(ex);
                     }
                 }
                 q.forEach(EXPECTED_PACKETS::remove);
+                System.out.println(EXPECTED_PACKETS.size());
                 handleClientPacket(p);
             } catch (IOException | InvalidPacketFormatException | CryptoException e) {
 
@@ -162,6 +166,11 @@ public class RoomSocket implements IRoomSocket, Runnable {
                 SuccessfulMulticastRoomCreationPacket s = (SuccessfulMulticastRoomCreationPacket) packet;
                 //handle room stuff
                 currentMulticastAddress = s.getIP();
+                try {
+                    CLIENT_SOCKET.joinGroup(currentMulticastAddress);
+                } catch (IOException e) {
+
+                }
                 Platform.runLater(() ->
                         Main.getInstance().getEventNode().fireEvent(new RoomResponseEvent(RoomResponseEvent.CREATE_ROOM, true, s.getName()))
                 );
@@ -169,6 +178,11 @@ public class RoomSocket implements IRoomSocket, Runnable {
             case Constants.OPCODE.JOINSUC:
                 JoinRoomSuccessPacket j = (JoinRoomSuccessPacket) packet;
                 currentMulticastAddress = j.getIp();
+                try {
+                    CLIENT_SOCKET.joinGroup(currentMulticastAddress);
+                } catch (IOException e) {
+
+                }
                 Platform.runLater(() ->
                         Main.getInstance().getEventNode().fireEvent(new RoomResponseEvent(RoomResponseEvent.JOIN_ROOM, true, j.getName()))
                 );
@@ -211,7 +225,7 @@ public class RoomSocket implements IRoomSocket, Runnable {
         AnnounceAckPacket ackPacket = packet.createAck(TIME_STAMP.get());
         ExpectedPacket ex = new ExpectedPacket(ackPacket.getAckAck(), TIME_STAMP.get(), ackPacket);
         EXPECTED_PACKETS.offer(ex);
-        IO_QUEUE.offer(ackPacket.getDatagramPacket(SERVER_ADDRESS, Constants.PORTS.SERVER));
+        IO_QUEUE.offer(ackPacket.getDatagramPacket(currentMulticastAddress, Constants.PORTS.CLIENT));
         Platform.runLater(() ->
                 Main.getInstance().getEventNode().fireEvent(new UserEvent(UserEvent.JOIN_EVENT, packet.getNickName()))
         );
@@ -219,9 +233,8 @@ public class RoomSocket implements IRoomSocket, Runnable {
 
     private void handleAnnouncementAck(AnnounceAckPacket packet) {
         TIME_STAMP.getAndIncrement();
-        AnnounceAckAckPacket ackPacket = new AnnounceAckAckPacket();
-        IO_QUEUE.offer(ackPacket.getDatagramPacket(SERVER_ADDRESS, Constants.PORTS.SERVER));
-        //TODO handle not receiving packet for a long time needing a resend.
+        AnnounceAckAckPacket ackPacket = packet.getAckAck();
+        IO_QUEUE.offer(ackPacket.getDatagramPacket(currentMulticastAddress, Constants.PORTS.CLIENT));
     }
 
     private void handleAnnouncementAckAck(AnnounceAckAckPacket packet) {
@@ -299,14 +312,13 @@ public class RoomSocket implements IRoomSocket, Runnable {
     }
 
     @Override
-    public long sendToEveryone(String message, String password) {
-        MessagePacket messagePacket = new MessagePacket(message, password, Constants.TYPE.MULTICAST);
-        DatagramPacket packet = messagePacket.getDatagramPacket(currentMulticastAddress, Constants.PORTS.SERVER);
-        packet.setPort(Constants.PORTS.CLIENT);
+    public long sendToEveryone(String username, String message, String password) {
+        MessagePacket messagePacket = new MessagePacket(username, message, Constants.TYPE.MULTICAST);
+        DatagramPacket packet = messagePacket.getDatagramPacket(currentMulticastAddress, Constants.PORTS.CLIENT);
         MessageAckPacket ex = messagePacket.createAck();
         ExpectedPacket expectedPacket = new ExpectedPacket(ex, TIME_STAMP.get(), messagePacket);
         EXPECTED_PACKETS.offer(expectedPacket);
-        //packet.setAddress("0.0.0.0"); //TODO get MULTICAST IP if needed.
+        System.out.println("Added send to IOQUEUE");
         IO_QUEUE.offer(packet);
         return TIME_STAMP.getAndIncrement();
     }
@@ -335,6 +347,13 @@ public class RoomSocket implements IRoomSocket, Runnable {
         TIME_STAMP.getAndIncrement();
         Platform.runLater(() ->
                 Main.getInstance().getEventNode().fireEvent(new UserEvent(UserEvent.LEAVE_EVENT, nickName)));
+    }
+
+    @Override
+    public void announce(String username, String password) {
+        AnnouncePacket p = new AnnouncePacket(username,password);
+        TIME_STAMP.getAndIncrement();
+        IO_QUEUE.offer(p.getDatagramPacket(currentMulticastAddress,Constants.PORTS.CLIENT));
     }
 
     /**

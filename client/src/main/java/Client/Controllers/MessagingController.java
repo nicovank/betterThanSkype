@@ -53,8 +53,7 @@ public class MessagingController implements IMessage, ILeaveRoom, IUserChange {
      */
     @Override
     public void sendMessage(String message) {
-        roomSocket.sendToEveryone(message,password); //message
-        //TODO user needed?
+        roomSocket.sendToEveryone(username,message,password); //message
     }
 
     /**
@@ -117,7 +116,7 @@ public class MessagingController implements IMessage, ILeaveRoom, IUserChange {
     private void addLocalMessage(){
         String message = textBox.getText().replace("\n","");
         if(!message.isEmpty() && !message.isBlank()) {
-            long timeStamp = roomSocket.sendToEveryone(message, password);
+            long timeStamp = roomSocket.sendToEveryone(username,message, password);
             Message m = new Message(message, username, timeStamp);
             messages.add(m);
             addMessageToChat(m);
@@ -139,7 +138,14 @@ public class MessagingController implements IMessage, ILeaveRoom, IUserChange {
      */
     @Override
     public void userJoinedRoom(UserEvent e) {
-        memberList.getChildren().add(new Label(e.getUsername()));
+        if(memberList.getChildren().stream().noneMatch(l->{
+            if(l instanceof Label){
+                return ((Label) l).getText().equals(e.getUsername());
+            }
+            else
+                return false;
+        }))
+            memberList.getChildren().add(new Label(e.getUsername()));
     }
 
     /**

@@ -10,9 +10,10 @@ public interface IRoomSocket {
 
     void attemptToCreateRoom(String room, String username, String password);
     void attemptToJoinRoom(String username, String room, String password);
-    long sendToEveryone(String message,String password);
+    long sendToEveryone(String username, String message,String password);
     void sendLeavingMessage(String username, String roomname);
     void addToSendList(String nickName,Address address);
     void removeFromSendList(String nickName);
+    void announce(String username, String password);
 
 }
