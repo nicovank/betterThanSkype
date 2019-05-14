@@ -13,6 +13,10 @@ public class ExpectedPacket {
 
     private Packet original;
 
+    public void setTime(long time) {
+        this.time = time;
+    }
+
     public long getTime() {
         return time;
     }

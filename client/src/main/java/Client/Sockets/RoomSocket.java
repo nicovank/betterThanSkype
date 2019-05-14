@@ -91,7 +91,8 @@ public class RoomSocket implements IRoomSocket, Runnable {
 
             //This section handles timeouts, if an expected packet is not received .5s after it is supposed to, the packet is resent
             for (ExpectedPacket ex : EXPECTED_PACKETS) {
-                if ((System.nanoTime() - ex.getTime()) > 500000000L) {
+                if ((System.nanoTime() - ex.getTime()) > 1000000000L) {
+                    ex.setTime(System.nanoTime());
                     if (ex.getPacket().getOperationCode() < 8) {
                         IO_QUEUE.offer(ex.getOriginal().getDatagramPacket(SERVER_ADDRESS, Constants.PORTS.SERVER));
                     } else {
@@ -139,12 +140,13 @@ public class RoomSocket implements IRoomSocket, Runnable {
                 DatagramPacket packet = new DatagramPacket(bytes, bytes.length);
                 CLIENT_SOCKET.receive(packet);         //TODO encryption?
                 Packet p = Packet.parse(packet.getData());
-                for (ExpectedPacket ex : EXPECTED_PACKETS
-                ) {
-                    if (checkPacketEquality(p, ex.getPacket())) {
-                        EXPECTED_PACKETS.remove(ex);
+                Queue<ExpectedPacket> q = new LinkedList<>();
+                for (ExpectedPacket ex : EXPECTED_PACKETS) {
+                    if (p.equals(ex.getPacket())) {
+                        q.add(ex);
                     }
                 }
+                q.forEach(EXPECTED_PACKETS::remove);
                 handleClientPacket(p);
             } catch (IOException | InvalidPacketFormatException | CryptoException e) {
 
@@ -275,10 +277,10 @@ public class RoomSocket implements IRoomSocket, Runnable {
     //IMPORTANT ALL OF THESE MESSAGES SHOULD END WITH SENDING A PACKET TO IOQUEUE AND INCREMENTING TIME_STAMP
     @Override
     public void attemptToCreateRoom(String room, String username, String password) {
-        RoomCreationRequestPacket creationRequestPacket = new RoomCreationRequestPacket(room, username, password, Constants.TYPE.MULTICAST);
+        RoomCreationRequestPacket creationRequestPacket = new RoomCreationRequestPacket(username, room, password, Constants.TYPE.MULTICAST);
         DatagramPacket packet = creationRequestPacket.getDatagramPacket(SERVER_ADDRESS, Constants.PORTS.SERVER);
         IO_QUEUE.offer(packet);
-        SuccessfulMulticastRoomCreationPacket suc = new SuccessfulMulticastRoomCreationPacket(room, password, SERVER_ADDRESS, Constants.PORTS.SERVER);
+        SuccessfulMulticastRoomCreationPacket suc = new SuccessfulMulticastRoomCreationPacket(room, password, currentMulticastAddress, Constants.PORTS.SERVER);
         ExpectedPacket ex = new ExpectedPacket(suc, TIME_STAMP.get(), creationRequestPacket);
         EXPECTED_PACKETS.offer(ex);
         TIME_STAMP.getAndIncrement();
