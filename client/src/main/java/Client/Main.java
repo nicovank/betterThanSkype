@@ -67,6 +67,8 @@ public class Main extends Application {
 
     @Override
     public void stop() {
+        MessagingController m = ((MessagingController)scenes.get("Messaging Window").getController());
+        m.leaveRoom();
         System.exit(0);
     }
 }
