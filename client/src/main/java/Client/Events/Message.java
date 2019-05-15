@@ -24,6 +24,8 @@ public final class Message implements Comparable<Message> {
 
     @Override
     public int compareTo(Message o) {
+        System.out.println("timestamp 1 " + timeStamp);
+        System.out.println("timestamp 2 " + o.getTimeStamp());
         if (timeStamp < o.getTimeStamp()){
             return -1;
         }else if (timeStamp > o.getTimeStamp()){
@@ -46,6 +48,6 @@ public final class Message implements Comparable<Message> {
     }
 
     public String getFullText(){
-        return username + "says: \""+ text + "\"";
+        return username + " says: \""+ text + "\"";
     }
 }

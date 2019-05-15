@@ -14,7 +14,7 @@ public final class Address {
     }
 
     public static Address randomMulticastGroup() throws UnknownHostException {
-        return new Address(InetAddress.getByName("224.1.1.13"), 7896);
+        return new Address(InetAddress.getByName("239.1.1.13"), 7896);
     }
 
     public InetAddress getAddress() {

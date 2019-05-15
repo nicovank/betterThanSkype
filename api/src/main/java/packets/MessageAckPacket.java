@@ -32,6 +32,10 @@ public class MessageAckPacket extends Packet {
 
     @Override
     public boolean equals(Object other){
-        return this.timestamp == ((MessageAckPacket) other).timestamp;
+        if(other instanceof MessageAckPacket) {
+            return this.timestamp == ((MessageAckPacket) other).timestamp;
+        }else{
+            return false;
+        }
     }
 }

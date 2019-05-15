@@ -6,6 +6,7 @@ public class AnnounceAckAckPacket extends Packet {
 
     public static AnnounceAckAckPacket parse(byte[] data) throws InvalidPacketFormatException {
         if (data.length != 0) {
+            System.out.println(data.length);
             throw new InvalidPacketFormatException("Invalid AAA packet received.");
         }
 
@@ -20,5 +21,10 @@ public class AnnounceAckAckPacket extends Packet {
     @Override
     public byte getOperationCode() {
         return Constants.OPCODE.ANNACKACK;
+    }
+
+    @Override
+    public boolean equals(Object other){
+        return other instanceof AnnounceAckAckPacket;
     }
 }

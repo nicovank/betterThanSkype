@@ -130,8 +130,8 @@ public final class JoinRoomSuccessPacket extends Packet {
         JoinRoomSuccessPacket o = (JoinRoomSuccessPacket) other;
         return o.name.equals(this.name)
                 && o.secret.equals(this.secret)
-                && o.type == this.type
+                && o.type == this.type;/*
                 && o.ip.equals(this.ip)
-                && o.port == this.port;
+                && o.port == this.port;*/
     }
 }

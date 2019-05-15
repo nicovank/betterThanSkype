@@ -6,6 +6,7 @@ import Client.Events.UserEvent;
 import Client.Sockets.IRoomSocket;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -30,6 +31,9 @@ public class MessagingController implements IMessage, ILeaveRoom, IUserChange {
     private Label roomName;
     @FXML
     private VBox memberList;
+    @FXML
+    private ScrollPane scrollPane;
+
     private List<Message> messages = new ArrayList<>();
     private IRoomSocket roomSocket;
 
@@ -53,8 +57,7 @@ public class MessagingController implements IMessage, ILeaveRoom, IUserChange {
      */
     @Override
     public void sendMessage(String message) {
-        roomSocket.sendToEveryone(message,password); //message
-        //TODO user needed?
+        roomSocket.sendToEveryone(username,message,password); //message
     }
 
     /**
@@ -117,7 +120,7 @@ public class MessagingController implements IMessage, ILeaveRoom, IUserChange {
     private void addLocalMessage(){
         String message = textBox.getText().replace("\n","");
         if(!message.isEmpty() && !message.isBlank()) {
-            long timeStamp = roomSocket.sendToEveryone(message, password);
+            long timeStamp = roomSocket.sendToEveryone(username,message, password);
             Message m = new Message(message, username, timeStamp);
             messages.add(m);
             addMessageToChat(m);
@@ -131,6 +134,7 @@ public class MessagingController implements IMessage, ILeaveRoom, IUserChange {
      */
     private void addMessageToChat(Message message) {
         chatBox.getChildren().add(new Label(message.getFullText()));
+        scrollPane.vvalueProperty().bind(chatBox.heightProperty());
     }
 
     /**
@@ -139,7 +143,14 @@ public class MessagingController implements IMessage, ILeaveRoom, IUserChange {
      */
     @Override
     public void userJoinedRoom(UserEvent e) {
-        memberList.getChildren().add(new Label(e.getUsername()));
+        if(memberList.getChildren().stream().noneMatch(l->{
+            if(l instanceof Label){
+                return ((Label) l).getText().equals(e.getUsername());
+            }
+            else
+                return false;
+        }))
+            memberList.getChildren().add(new Label(e.getUsername()));
     }
 
     /**

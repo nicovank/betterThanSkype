@@ -116,8 +116,8 @@ public final class SuccessfulMulticastRoomCreationPacket extends Packet {
         if (!(other instanceof SuccessfulMulticastRoomCreationPacket)) return false;
         SuccessfulMulticastRoomCreationPacket o = (SuccessfulMulticastRoomCreationPacket) other;
         return o.name.equals(this.name)
-                && o.secret.equals(this.secret)
-                && o.ip.equals(this.ip)
-                && o.port == this.port;
+                && o.secret.equals(this.secret);
+                /*&& o.ip.equals(this.ip)
+                && o.port == this.port; */
     }
 }
