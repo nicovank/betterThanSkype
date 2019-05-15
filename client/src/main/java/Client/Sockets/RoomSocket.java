@@ -237,6 +237,9 @@ public class RoomSocket implements IRoomSocket, Runnable {
 
     private void handleAnnouncementAck(AnnounceAckPacket packet) {
         TIME_STAMP.set(Math.max(packet.getTimestamp(),TIME_STAMP.get()));
+        if (!packet.getNickName().equals(username)) {
+            return;
+        }
         AnnounceAckAckPacket ackPacket = packet.getAckAck();
         DatagramPacket payload = null;
         try {
