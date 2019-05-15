@@ -9,8 +9,8 @@ public class AnnouncePacketAckTest {
     @Test
     public void testParse() throws InvalidPacketFormatException {
         byte[] data = new byte[]{
-                (byte)8, 'n', 'i', 'c', 'k', 'n', 'a', 'm', 'e',
-                (byte)8, 'p', 'a', 's', 's', 'w', 'o', 'r', 'd',
+                8, 'n', 'i', 'c', 'k', 'n', 'a', 'm', 'e',
+                0,0,0,8, 'p', 'a', 's', 's', 'w', 'o', 'r', 'd',
                 0, 0, 0, 0, 0, 0, 0, 1
         };
         AnnounceAckPacket packet = AnnounceAckPacket.parse(data);
@@ -22,10 +22,11 @@ public class AnnouncePacketAckTest {
 
     @Test
     public void testSerialize(){
-        AnnounceAckPacket packet = new AnnounceAckPacket("nickname", "password", 1);
+        AnnounceAckPacket packet = new AnnounceAckPacket("nickname", "other", "password", 1);
         byte[] data = new byte[]{
-                (byte)8, 'n', 'i', 'c', 'k', 'n', 'a', 'm', 'e',
-                (byte)8, 'p', 'a', 's', 's', 'w', 'o', 'r', 'd',
+                8, 'n', 'i', 'c', 'k', 'n', 'a', 'm', 'e',
+                5, 'o', 't', 'h', 'e', 'r',
+                0,0,0,8, 'p', 'a', 's', 's', 'w', 'o', 'r', 'd',
                 0, 0, 0, 0, 0, 0, 0, 1
         };
 

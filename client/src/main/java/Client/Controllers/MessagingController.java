@@ -6,6 +6,7 @@ import Client.Events.UserEvent;
 import Client.Sockets.IRoomSocket;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -30,6 +31,9 @@ public class MessagingController implements IMessage, ILeaveRoom, IUserChange {
     private Label roomName;
     @FXML
     private VBox memberList;
+    @FXML
+    private ScrollPane scrollPane;
+
     private List<Message> messages = new ArrayList<>();
     private IRoomSocket roomSocket;
 
@@ -130,6 +134,7 @@ public class MessagingController implements IMessage, ILeaveRoom, IUserChange {
      */
     private void addMessageToChat(Message message) {
         chatBox.getChildren().add(new Label(message.getFullText()));
+        scrollPane.vvalueProperty().bind(chatBox.heightProperty());
     }
 
     /**
