@@ -134,7 +134,26 @@ public final class PacketHandler extends Thread {
                     break;
 
                 case Constants.OPCODE.LEAVEROOM:
-                    // TODO HANDLE
+                    LeaveRoomPacket lrr = (LeaveRoomPacket) packet;
+                    room = rooms.get(lrr.getRoomname());
+
+                    if (room == null) {
+                        throw new HandleException(address, pub, Constants.ERROR_CODE.JOINERROR, "There is no room named '%s'.", lrr.getRoomname());
+                    }
+
+                    Peer peer = room.getPeer(lrr.getNickname());
+
+                    if (peer == null) {
+                        throw new HandleException(address, pub, Constants.ERROR_CODE.OTHER, "There is no peer named '%s' in room '%s'.", lrr.getNickname());
+                    }
+
+                    if (!peer.getAddress().equals(address)) {
+                        throw new HandleException(address, pub, Constants.ERROR_CODE.OTHER, "Received a LRR from the wrong IP address.");
+                    }
+
+                    if (!room.removePeer(lrr.getNickname())) {
+                        throw new HandleException(address, pub, Constants.ERROR_CODE.OTHER, "There was an issue removing the peer.");
+                    }
                     break;
             }
         }
