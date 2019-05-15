@@ -7,6 +7,7 @@ import java.util.Objects;
 public final class Address {
     private InetAddress address;
     private int port;
+    private static byte count;
 
     public Address(InetAddress address, int port) {
         this.address = address;
@@ -14,7 +15,7 @@ public final class Address {
     }
 
     public static Address randomMulticastGroup() throws UnknownHostException {
-        return new Address(InetAddress.getByName("239.1.1.13"), 7896);
+        return new Address(InetAddress.getByName("239.1.1." + ++count), 7896);
     }
 
     public InetAddress getAddress() {
