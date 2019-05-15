@@ -11,7 +11,6 @@ public abstract class Room {
     private final String secret;
     private final Map<String, Peer> peers;
 
-
     public Room(String name, String password) {
         this.name = name;
         this.password = password;
@@ -31,6 +30,10 @@ public abstract class Room {
     public boolean addPeer(Peer p) {
         Peer q = peers.putIfAbsent(p.getNickname(), p);
         return p.equals(q);
+    }
+
+    public boolean isEmpty() {
+        return peers.isEmpty();
     }
 
     /**
