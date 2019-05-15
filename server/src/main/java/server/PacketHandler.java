@@ -161,6 +161,10 @@ public final class PacketHandler extends Thread {
                     if (!room.removePeer(lrr.getNickname())) {
                         throw new HandleException(address, pub, Constants.ERROR_CODE.OTHER, "There was an issue removing the peer.");
                     }
+
+                    if (room.isEmpty()) {
+                        rooms.remove(lrr.getRoomname());
+                    }
                     break;
             }
         }

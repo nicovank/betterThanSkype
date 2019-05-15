@@ -1,6 +1,7 @@
 package sockets;
 
 import crypto.CryptoException;
+import crypto.RSA;
 import packets.InvalidPacketFormatException;
 import packets.Packet;
 import utils.Address;
@@ -17,9 +18,11 @@ import java.util.Arrays;
 public final class BTSSocket {
 
     private final DatagramSocket socket;
+    private final RSA rsa;
 
-    public BTSSocket(int port) throws SocketException {
+    public BTSSocket(int port, RSA rsa) throws SocketException {
         socket = new DatagramSocket(port);
+        this.rsa = rsa;
     }
 
     /**
@@ -36,7 +39,7 @@ public final class BTSSocket {
 
         try {
             socket.receive(packet);
-            Packet received = Packet.parse(Arrays.copyOf(packet.getData(), packet.getLength()));
+            Packet received = Packet.parse(Arrays.copyOf(packet.getData(), packet.getLength()), rsa);
 
             System.out.println("Received packet with OPCODE " + received.getOperationCode() + " from " + packet.getAddress() + " at port " + packet.getPort() + ".");
 
