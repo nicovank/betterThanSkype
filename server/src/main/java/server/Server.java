@@ -31,7 +31,7 @@ public class Server extends Thread {
         outbound = new ConcurrentLinkedQueue<>();
         rsa = new RSA();
 
-        socket = new BTSSocket(port);
+        socket = new BTSSocket(port, rsa);
     }
 
     @Override

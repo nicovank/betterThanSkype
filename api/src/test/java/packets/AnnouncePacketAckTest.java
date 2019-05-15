@@ -10,6 +10,7 @@ public class AnnouncePacketAckTest {
     public void testParse() throws InvalidPacketFormatException {
         byte[] data = new byte[]{
                 8, 'n', 'i', 'c', 'k', 'n', 'a', 'm', 'e',
+                5, 'o', 't', 'h', 'e', 'r',
                 0,0,0,8, 'p', 'a', 's', 's', 'w', 'o', 'r', 'd',
                 0, 0, 0, 0, 0, 0, 0, 1
         };

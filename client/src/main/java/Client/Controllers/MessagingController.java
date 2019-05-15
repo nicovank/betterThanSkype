@@ -3,6 +3,7 @@ package Client.Controllers;
 import Client.Events.Message;
 import Client.Events.MessageReceivedEvent;
 import Client.Events.UserEvent;
+import Client.Main;
 import Client.Sockets.IRoomSocket;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -36,7 +37,7 @@ public class MessagingController implements IMessage, ILeaveRoom, IUserChange {
 
     private List<Message> messages = new ArrayList<>();
     private IRoomSocket roomSocket;
-
+    private String room;
     private String password;
 
     /**
@@ -85,6 +86,7 @@ public class MessagingController implements IMessage, ILeaveRoom, IUserChange {
         roomSocket = s;
         this.username = username;
         this.roomName.setText(roomName);
+        this.room = roomName;
         this.password = password;
         memberList.getChildren().add(new Label(username)); //when video/audio gets added this will need changing
     }
@@ -167,5 +169,9 @@ public class MessagingController implements IMessage, ILeaveRoom, IUserChange {
             }
             return false;
         });
+    }
+
+    public void leaveRoom(){
+        leaveRoom(username,room,password);
     }
 }

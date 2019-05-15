@@ -2,6 +2,7 @@ package Client.Sockets;
 
 import Client.Events.*;
 import Client.Main;
+import crypto.AES;
 import crypto.CryptoException;
 import crypto.RSA;
 import javafx.application.Platform;
@@ -36,6 +37,7 @@ public class RoomSocket implements IRoomSocket, Runnable {
     private final ConcurrentLinkedQueue<DatagramPacket> IO_QUEUE;
     private final AtomicLong TIME_STAMP;
     private final ConcurrentLinkedQueue<ExpectedPacket> EXPECTED_PACKETS;
+    private  AES aes;
     private InetAddress currentMulticastAddress;
     private String username;
 
@@ -143,7 +145,7 @@ public class RoomSocket implements IRoomSocket, Runnable {
                 byte[] bytes = new byte[Constants.MAX_PACKET_SIZE];
                 DatagramPacket packet = new DatagramPacket(bytes, bytes.length);
                 CLIENT_SOCKET.receive(packet);         //TODO encryption?
-                Packet p = Packet.parse(Arrays.copyOf(packet.getData(), packet.getLength()));
+                Packet p = Packet.parse(Arrays.copyOf(packet.getData(), packet.getLength()),aes);
                 System.out.println("Received packet  " + p.getOperationCode());
                 EXPECTED_PACKETS.removeIf(l -> l.getPacket().equals(p));
                 System.out.println(EXPECTED_PACKETS.size());
@@ -223,7 +225,11 @@ public class RoomSocket implements IRoomSocket, Runnable {
         AnnounceAckPacket ackPacket = packet.createAck(TIME_STAMP.get(), username);
         ExpectedPacket ex = new ExpectedPacket(ackPacket.getAckAck(), TIME_STAMP.get(), ackPacket);
         EXPECTED_PACKETS.offer(ex);
-        IO_QUEUE.offer(ackPacket.getDatagramPacket(currentMulticastAddress, Constants.PORTS.CLIENT));
+        try {
+            IO_QUEUE.offer(ackPacket.getDatagramPacket(currentMulticastAddress, Constants.PORTS.CLIENT,aes));
+        } catch (CryptoException e) {
+            System.exit(1);
+        }
         Platform.runLater(() ->
                 Main.getInstance().getEventNode().fireEvent(new UserEvent(UserEvent.JOIN_EVENT, packet.getNickName()))
         );
@@ -232,7 +238,12 @@ public class RoomSocket implements IRoomSocket, Runnable {
     private void handleAnnouncementAck(AnnounceAckPacket packet) {
         TIME_STAMP.set(Math.max(packet.getTimestamp(),TIME_STAMP.get()));
         AnnounceAckAckPacket ackPacket = packet.getAckAck();
-        DatagramPacket payload = ackPacket.getDatagramPacket(currentMulticastAddress, Constants.PORTS.CLIENT);
+        DatagramPacket payload = null;
+        try {
+            payload = ackPacket.getDatagramPacket(currentMulticastAddress, Constants.PORTS.CLIENT,aes);
+        } catch (CryptoException e) {
+            System.exit(1);
+        }
         IO_QUEUE.offer(payload);
         Platform.runLater(() ->
                 Main.getInstance().getEventNode().fireEvent(new UserEvent(UserEvent.JOIN_EVENT, packet.getOtherNickName()))
@@ -293,6 +304,12 @@ public class RoomSocket implements IRoomSocket, Runnable {
     //IMPORTANT ALL OF THESE MESSAGES SHOULD END WITH SENDING A PACKET TO IOQUEUE AND INCREMENTING TIME_STAMP
     @Override
     public void attemptToCreateRoom(String room, String username, String password) {
+        try {
+            aes = new AES(password);
+        } catch (CryptoException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
         this.username = username;
         RoomCreationRequestPacket creationRequestPacket = new RoomCreationRequestPacket(username, room, password, Constants.TYPE.MULTICAST);
         DatagramPacket packet = creationRequestPacket.getDatagramPacket(SERVER_ADDRESS, Constants.PORTS.SERVER);
@@ -305,6 +322,12 @@ public class RoomSocket implements IRoomSocket, Runnable {
 
     @Override
     public void attemptToJoinRoom(String username, String room, String password) {
+        try {
+            aes = new AES(password);
+        } catch (CryptoException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
         JoinRoomRequestPacket joinRequestPacket = new JoinRoomRequestPacket(username, room, password, Constants.TYPE.MULTICAST);
         DatagramPacket packet = joinRequestPacket.getDatagramPacket(SERVER_ADDRESS, Constants.PORTS.SERVER);
         JoinRoomSuccessPacket succ = new JoinRoomSuccessPacket(room, password, SERVER_ADDRESS, Constants.PORTS.SERVER, Constants.TYPE.MULTICAST);
@@ -317,7 +340,12 @@ public class RoomSocket implements IRoomSocket, Runnable {
     @Override
     public long sendToEveryone(String username, String message, String password) {
         MessagePacket messagePacket = new MessagePacket(username, message, Constants.TYPE.MULTICAST);
-        DatagramPacket packet = messagePacket.getDatagramPacket(currentMulticastAddress, Constants.PORTS.CLIENT);
+        DatagramPacket packet = null;
+        try {
+            packet = messagePacket.getDatagramPacket(currentMulticastAddress, Constants.PORTS.CLIENT,aes);
+        } catch (CryptoException e) {
+            System.exit(1);
+        }
         MessageAckPacket ex = messagePacket.createAck();
         ExpectedPacket expectedPacket = new ExpectedPacket(ex, TIME_STAMP.get(), messagePacket);
         EXPECTED_PACKETS.offer(expectedPacket);
@@ -329,11 +357,14 @@ public class RoomSocket implements IRoomSocket, Runnable {
     @Override
     public void sendLeavingMessage(String username, String roomname) {
         LeaveRoomPacket packet = new LeaveRoomPacket(username, roomname);
-        DatagramPacket clientPacket = packet.getDatagramPacket(currentMulticastAddress, Constants.PORTS.SERVER);
-        LeaveRoomPacket packet2 = new LeaveRoomPacket(username, roomname);
-        DatagramPacket serverPacket = packet2.getDatagramPacket(SERVER_ADDRESS, Constants.PORTS.SERVER);
-        IO_QUEUE.offer(clientPacket);
-        IO_QUEUE.offer(serverPacket);
+        try {
+            DatagramPacket clientPacket = packet.getDatagramPacket(currentMulticastAddress, Constants.PORTS.CLIENT, aes);
+            DatagramPacket serverPacket = packet.getDatagramPacket(SERVER_ADDRESS, Constants.PORTS.SERVER,SERVER_PUBLIC_KEY);
+            SERVER_SOCKET.send(serverPacket);
+            CLIENT_SOCKET.send(clientPacket);
+        } catch (CryptoException | IOException e) {
+            System.exit(1);
+        }
     }
 
     @Override
@@ -357,7 +388,11 @@ public class RoomSocket implements IRoomSocket, Runnable {
         this.username = username;
         AnnouncePacket p = new AnnouncePacket(username,password);
         TIME_STAMP.getAndIncrement();
-        IO_QUEUE.offer(p.getDatagramPacket(currentMulticastAddress,Constants.PORTS.CLIENT));
+        try {
+            IO_QUEUE.offer(p.getDatagramPacket(currentMulticastAddress,Constants.PORTS.CLIENT,aes));
+        } catch (CryptoException e) {
+            System.exit(1);
+        }
     }
 
     /**
