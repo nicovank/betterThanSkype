@@ -6,6 +6,12 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
+/**
+ * Packet that gets sent when a user joins a room
+ *
+ *  @author Nick Esposito
+ *
+ */
 public class AnnouncePacket extends Packet {
     private final String nickName;
     private final String password;

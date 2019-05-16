@@ -6,6 +6,11 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
+/**
+ * @author Nick esposito
+ *
+ * Packet that contains the actual messages sent between clients
+ */
 public class MessagePacket extends Packet {
     public String getNickName() {
         return nickName;
