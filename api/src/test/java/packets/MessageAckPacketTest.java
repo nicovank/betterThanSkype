@@ -7,6 +7,13 @@ import java.nio.ByteBuffer;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
+
+/**
+ * Tests the MessageAckPacket to make sure data is package correctly
+ * @author Michael Anthony
+ */
+
+
 public class MessageAckPacketTest {
 
     public void testSerializeWithSmallPacket() {

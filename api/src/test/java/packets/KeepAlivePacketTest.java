@@ -7,6 +7,12 @@ import utils.Constants;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
+/**
+ * Tests the KeepAlivePacket to make sure data is package correctly
+ * @author Michael Anthony
+ */
+
+
 public class KeepAlivePacketTest {
 
 
