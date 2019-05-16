@@ -4,6 +4,12 @@ import utils.Constants;
 
 import java.nio.ByteBuffer;
 
+/**
+ * Acknowledgement that a message was received, contains the timestamp of the original message
+ *
+ * @author Nick Esposito
+ *
+ */
 public class MessageAckPacket extends Packet {
     private final long timestamp;
 

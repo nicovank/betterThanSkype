@@ -2,6 +2,11 @@ package packets;
 
 import java.util.Objects;
 
+/**
+ * Data structure for dealing with timeouts, contains a reference to the expected next packet, the original packet, time, and timestmap
+ * @author Nick Esposito
+ *
+ */
 public class ExpectedPacket {
     private long time;
     private long timestamp;
