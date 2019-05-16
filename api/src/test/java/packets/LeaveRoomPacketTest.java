@@ -4,6 +4,11 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
+/**
+ * Tests the leave room packet
+ * @author Mike Doran
+ */
+
 public class LeaveRoomPacketTest {
     @Test
     public void testParse() throws InvalidPacketFormatException {

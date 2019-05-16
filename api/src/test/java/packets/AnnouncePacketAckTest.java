@@ -4,6 +4,11 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
+/**
+ * Tests the announce ack packet
+ * @author Mike Doran
+ */
+
 public class AnnouncePacketAckTest {
 
     @Test
