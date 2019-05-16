@@ -4,6 +4,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Keep track of Rooms where a certain group of clients can connect and leave from
+ * @author Michael Anthony
+ */
+
+
 public abstract class Room {
 
     private final String name;
@@ -56,23 +62,48 @@ public abstract class Room {
         return peers.get(nickname);
     }
 
+    /**
+     * Get name of a room
+     *
+     * @return a Rooms name
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Get password for a room
+     *
+     * @return Room's password
+     */
     public String getPassword() {
         return password;
     }
 
+    /**
+     * Get name of a room
+     *
+     * @return a Rooms name
+     */
     public String getSecret() {
         return secret;
     }
 
+    /**
+     * Used to get the hashcode for the Room
+     *
+     * @return a Rooms hashcode based off the parameters for the Room
+     */
     @Override
     public int hashCode() {
         return Objects.hash(name, password, secret, peers);
     }
 
+    /**
+     * Used to see if Room is equal to another Room object
+     * @param other (has to be a room object)
+     * @return false if the object is not a Room. True if it is a Room and has all require parameters
+     */
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof Room)) return false;
