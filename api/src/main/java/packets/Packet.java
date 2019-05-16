@@ -11,6 +11,10 @@ import java.net.InetAddress;
 import java.security.PublicKey;
 import java.util.Arrays;
 
+/**
+ * This class provides utilities to parse, encrypt, and serialize packets.It is also the superclass for all packets.
+ * @author Nicolas van Kempen
+ */
 public abstract class Packet {
 
     /**
