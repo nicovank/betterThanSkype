@@ -10,6 +10,7 @@ import java.util.Arrays;
  * This class provides utilities for encryption and decryption of messages using RSA.
  * Its methods are based on the builtin Java methods from `java.security` and
  * `javax.crypto`.
+ * @author Nicolas van Kempen
  */
 public final class RSA {
 
