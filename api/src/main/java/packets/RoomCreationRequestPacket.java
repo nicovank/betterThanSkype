@@ -6,6 +6,12 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
+/**
+ * A packet for requesting to create a room.
+ * @throws InvalidPacketFormatException if trying to parse an invalid packet
+ * @author Mike Doran
+ */
+
 public class RoomCreationRequestPacket extends Packet {
 
     private final String userName;

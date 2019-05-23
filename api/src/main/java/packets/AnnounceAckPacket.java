@@ -4,7 +4,11 @@ import utils.Constants;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-
+/**
+ * Acknowledgement packet for announcements
+ *
+ * @author Nick Esposito
+ */
 public class AnnounceAckPacket extends Packet {
     private final String nickName;
     private final String other;

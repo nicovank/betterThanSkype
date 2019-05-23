@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * this method handles sending and receiving packets from the the server and clients.
+ * this class handles sending and receiving packets from the the server and clients.
  * this includes encryption and firing events.
  *
  * @author Jim Spagnola
@@ -37,7 +37,7 @@ public class RoomSocket implements IRoomSocket, Runnable {
     private final ConcurrentLinkedQueue<DatagramPacket> IO_QUEUE;
     private final AtomicLong TIME_STAMP;
     private final ConcurrentLinkedQueue<ExpectedPacket> EXPECTED_PACKETS;
-    private  AES aes;
+    private AES aes;
     private InetAddress currentMulticastAddress;
     private String username;
 
@@ -81,6 +81,10 @@ public class RoomSocket implements IRoomSocket, Runnable {
         TIME_STAMP = new AtomicLong(0);
     }
 
+    /**
+     * This method is the entry point into the client, where actual sending and receiving happens.
+     * Sending is
+     */
     @Override
     public void run() {
         try {
@@ -125,7 +129,7 @@ public class RoomSocket implements IRoomSocket, Runnable {
                 byte[] bytes = new byte[Constants.MAX_PACKET_SIZE];
                 DatagramPacket packet = new DatagramPacket(bytes, bytes.length);
                 SERVER_SOCKET.receive(packet);
-                Packet p = Packet.parse(Arrays.copyOf(packet.getData(), packet.getLength()), KEYS); //TODO is encryption correct?
+                Packet p = Packet.parse(Arrays.copyOf(packet.getData(), packet.getLength()), KEYS);
                 Queue<ExpectedPacket> q = new LinkedList<>();
                 for (ExpectedPacket ex : EXPECTED_PACKETS) {
                     if (p.equals(ex.getPacket())) {
@@ -144,8 +148,8 @@ public class RoomSocket implements IRoomSocket, Runnable {
             try {
                 byte[] bytes = new byte[Constants.MAX_PACKET_SIZE];
                 DatagramPacket packet = new DatagramPacket(bytes, bytes.length);
-                CLIENT_SOCKET.receive(packet);         //TODO encryption?
-                Packet p = Packet.parse(Arrays.copyOf(packet.getData(), packet.getLength()),aes);
+                CLIENT_SOCKET.receive(packet);
+                Packet p = Packet.parse(Arrays.copyOf(packet.getData(), packet.getLength()), aes);
                 System.out.println("Received packet  " + p.getOperationCode());
                 EXPECTED_PACKETS.removeIf(l -> l.getPacket().equals(p));
                 System.out.println(EXPECTED_PACKETS.size());
@@ -159,8 +163,13 @@ public class RoomSocket implements IRoomSocket, Runnable {
         }
     }
 
+    /**
+     * handle all packets a client should be expected to receive from the server.
+     *
+     * @param packet The packet that has been received, determined to be from the server, based on the opcode
+     */
     private void handleServerPacket(Packet packet) {
-        //handle all packets a client should be expected to recieve from the server.
+
         switch (packet.getOperationCode()) {
             case Constants.OPCODE.MRCS:
                 SuccessfulMulticastRoomCreationPacket s = (SuccessfulMulticastRoomCreationPacket) packet;
@@ -190,6 +199,12 @@ public class RoomSocket implements IRoomSocket, Runnable {
         }
     }
 
+    /**
+     * This method takes in a generic client packet, and determines which type of packet it is based on opcode.
+     * Then, its appropriate handler is called
+     *
+     * @param packet A received packet which is determined to be from another client based on its opcode
+     */
     private void handleClientPacket(Packet packet) {
         //handle all packets a client should be expected to receive
         switch (packet.getOperationCode()) {
@@ -220,13 +235,19 @@ public class RoomSocket implements IRoomSocket, Runnable {
         }
     }
 
+    /**
+     * This method handles the case where an incoming packet is an announcement packet.
+     * It adds the announced user to the current list of users, then sends out an acknowledgement
+     *
+     * @param packet A packet determined to be of type AnnouncePacket
+     */
     private void handleAnnouncement(AnnouncePacket packet) {
         TIME_STAMP.getAndIncrement();
         AnnounceAckPacket ackPacket = packet.createAck(TIME_STAMP.get(), username);
         ExpectedPacket ex = new ExpectedPacket(ackPacket.getAckAck(), TIME_STAMP.get(), ackPacket);
         EXPECTED_PACKETS.offer(ex);
         try {
-            IO_QUEUE.offer(ackPacket.getDatagramPacket(currentMulticastAddress, Constants.PORTS.CLIENT,aes));
+            IO_QUEUE.offer(ackPacket.getDatagramPacket(currentMulticastAddress, Constants.PORTS.CLIENT, aes));
         } catch (CryptoException e) {
             System.exit(1);
         }
@@ -235,15 +256,21 @@ public class RoomSocket implements IRoomSocket, Runnable {
         );
     }
 
+    /**
+     * Handles the case where an incoming packet is an announce acknowledgement.
+     * This method adds the user from the ack to the current list of users, and will receive as many acks as there are users in the room
+     *
+     * @param packet A packet determined to be of type AnnounceAckPacket
+     */
     private void handleAnnouncementAck(AnnounceAckPacket packet) {
-        TIME_STAMP.set(Math.max(packet.getTimestamp(),TIME_STAMP.get()));
+        TIME_STAMP.set(Math.max(packet.getTimestamp(), TIME_STAMP.get()));
         if (!packet.getNickName().equals(username)) {
             return;
         }
         AnnounceAckAckPacket ackPacket = packet.getAckAck();
         DatagramPacket payload = null;
         try {
-            payload = ackPacket.getDatagramPacket(currentMulticastAddress, Constants.PORTS.CLIENT,aes);
+            payload = ackPacket.getDatagramPacket(currentMulticastAddress, Constants.PORTS.CLIENT, aes);
         } catch (CryptoException e) {
             System.exit(1);
         }
@@ -253,16 +280,29 @@ public class RoomSocket implements IRoomSocket, Runnable {
         );
     }
 
+    /**
+     * This method fires when receiving an AckAck
+     * No additional action is needed to handle this except incrementing the timestamp
+     *
+     * @param packet A packet determined to be of type AnnounceAckAckPacket
+     */
     private void handleAnnouncementAckAck(AnnounceAckAckPacket packet) {
         TIME_STAMP.getAndIncrement();
 
-        //TODO nothing? terminate waiting condition for handleAnnouncementAck
     }
 
+    /**
+     * This method fires when a message is received.
+     * Handles consensus by using lamport timestamps for causal consistency.
+     * Updates client timestamp based on the max of the packet's timestamp and the client's timestamp
+     * It creates a Message object from the contents of the MessagePacket, and adds it to the gui, also creates and sends an ack
+     *
+     * @param packet A packet determined to be of type MessagePacket. Contains the message and information about the sender
+     */
     private void handleMessage(MessagePacket packet) {
 
         MessageAckPacket ackPacket = packet.createAck();
-        IO_QUEUE.offer(ackPacket.getDatagramPacket(currentMulticastAddress,Constants.PORTS.CLIENT));
+        IO_QUEUE.offer(ackPacket.getDatagramPacket(currentMulticastAddress, Constants.PORTS.CLIENT));
 
         //resolve timeStamp
         //long timestamp = Math.min(TIME_STAMP.getAndIncrement(), packet.getTimestamp());
@@ -274,15 +314,25 @@ public class RoomSocket implements IRoomSocket, Runnable {
                 Main.getInstance().getEventNode().fireEvent(new MessageReceivedEvent(MessageReceivedEvent.MESSAGE_EVENT, m))
         );
 
-        //TODO timer if ack isn't received fast enough.
     }
 
+    /**
+     * Handles message acks
+     * No further action required other than incrementing timestamp
+     *
+     * @param packet A packet determined to be of type MessageAckPacket.
+     */
     private void handleMessageAck(MessageAckPacket packet) {
         TIME_STAMP.getAndIncrement();
 
-        //TODO nothing? break timer for ack packet.
     }
 
+    /**
+     * Handles when another user in the room has left.
+     * Removes that user from the list of users in the GUI
+     *
+     * @param packet A packet determined to be of type LeaveRoomPacket. Contains information about user that left.
+     */
     private void handleLeaveRoom(LeaveRoomPacket packet) {
         TIME_STAMP.getAndIncrement();
         Platform.runLater(() ->
@@ -290,21 +340,33 @@ public class RoomSocket implements IRoomSocket, Runnable {
         );
     }
 
+
     private void handleKeepAlive(KeepAlivePacket packet) {
         TIME_STAMP.getAndIncrement();
         KeepAliveAckPacket ackPacket = new KeepAliveAckPacket();
         IO_QUEUE.offer(ackPacket.getDatagramPacket(SERVER_ADDRESS, Constants.PORTS.SERVER));
+        //TODO implement keepalive logic
 
-        //TODO handle logistics for this
     }
 
     private void handleKeepAliveAck(KeepAliveAckPacket packet) {
         TIME_STAMP.getAndIncrement();
+        //TODO implement keepalive logic
 
-        //TODO nothing?
     }
 
     //IMPORTANT ALL OF THESE MESSAGES SHOULD END WITH SENDING A PACKET TO IOQUEUE AND INCREMENTING TIME_STAMP
+
+    /**
+     * Fires when a user attempts to create a room.
+     * Initializes the aes object with room password, and stores the room password and client username values input from the GUI
+     * Sends a room creation request packet to the server, and adds its expected ack to the EXPECTED_PACKETS list for timeout control
+     *
+     *
+     * @param room The current room name
+     * @param username Client's username
+     * @param password Room password
+     */
     @Override
     public void attemptToCreateRoom(String room, String username, String password) {
         try {
@@ -323,6 +385,15 @@ public class RoomSocket implements IRoomSocket, Runnable {
         TIME_STAMP.getAndIncrement();
     }
 
+    /**
+     * Fires when a user attempts to join a room.
+     * As either create or join could happen independently, aes is initialized with the password input in the GUI
+     *
+     * @param username The client's username
+     * @param room The room the client is attempting to join
+     * @param password Password the user entered in the GUI
+     */
+
     @Override
     public void attemptToJoinRoom(String username, String room, String password) {
         try {
@@ -340,12 +411,25 @@ public class RoomSocket implements IRoomSocket, Runnable {
         TIME_STAMP.getAndIncrement();
     }
 
+    /**
+     * Sends an encrypted message to all other clients in the room
+     * Fires when a user attempts to send a message from the GUI.
+     * A MessagePacket is created from the parameters, and is then turned into an encrypted DatagramPacket
+     * An expected ack is added to EXPECTED_PACKETS
+     * The encrypted DatagramPacket is then added to the IO_QUEUE to be sent, and the timestamp is incremented
+     *
+     *
+     * @param username The client's username
+     * @param message The message in plaintext
+     * @param password The room password, also in plaintext
+     * @return returns the timestamp incremented
+     */
     @Override
     public long sendToEveryone(String username, String message, String password) {
         MessagePacket messagePacket = new MessagePacket(username, message, Constants.TYPE.MULTICAST);
         DatagramPacket packet = null;
         try {
-            packet = messagePacket.getDatagramPacket(currentMulticastAddress, Constants.PORTS.CLIENT,aes);
+            packet = messagePacket.getDatagramPacket(currentMulticastAddress, Constants.PORTS.CLIENT, aes);
         } catch (CryptoException e) {
             System.exit(1);
         }
@@ -357,12 +441,19 @@ public class RoomSocket implements IRoomSocket, Runnable {
         return TIME_STAMP.getAndIncrement();
     }
 
+    /**
+     * Send a LeaveRoomPacket to client and server
+     * Does not necessitate ack
+     *
+     * @param username The client's username
+     * @param roomname The current room name
+     */
     @Override
     public void sendLeavingMessage(String username, String roomname) {
         LeaveRoomPacket packet = new LeaveRoomPacket(username, roomname);
         try {
             DatagramPacket clientPacket = packet.getDatagramPacket(currentMulticastAddress, Constants.PORTS.CLIENT, aes);
-            DatagramPacket serverPacket = packet.getDatagramPacket(SERVER_ADDRESS, Constants.PORTS.SERVER,SERVER_PUBLIC_KEY);
+            DatagramPacket serverPacket = packet.getDatagramPacket(SERVER_ADDRESS, Constants.PORTS.SERVER, SERVER_PUBLIC_KEY);
             SERVER_SOCKET.send(serverPacket);
             CLIENT_SOCKET.send(clientPacket);
         } catch (CryptoException | IOException e) {
@@ -370,77 +461,45 @@ public class RoomSocket implements IRoomSocket, Runnable {
         }
     }
 
+    /**
+     * @deprecated
+     * Functionality of this method is included in AnnounceAck handle
+     *
+     */
     @Override
     public void addToSendList(String nickName, Address address) {
-        //TODO implement still needs to persist username/addresses
         TIME_STAMP.getAndIncrement();
         Platform.runLater(() ->
                 Main.getInstance().getEventNode().fireEvent(new UserEvent(UserEvent.JOIN_EVENT, nickName)));
     }
 
+    /**
+     * @deprecated
+     * Functionality of this method is included in LeaveAck handle
+     */
     @Override
     public void removeFromSendList(String nickName) {
-        //TODO implement still needs to persist username/addresses
         TIME_STAMP.getAndIncrement();
         Platform.runLater(() ->
                 Main.getInstance().getEventNode().fireEvent(new UserEvent(UserEvent.LEAVE_EVENT, nickName)));
     }
 
+    /**
+     *
+     * @param username Client Username
+     * @param password Client Password
+     */
     @Override
     public void announce(String username, String password) {
         this.username = username;
-        AnnouncePacket p = new AnnouncePacket(username,password);
+        AnnouncePacket p = new AnnouncePacket(username, password);
         TIME_STAMP.getAndIncrement();
         try {
-            IO_QUEUE.offer(p.getDatagramPacket(currentMulticastAddress,Constants.PORTS.CLIENT,aes));
+            IO_QUEUE.offer(p.getDatagramPacket(currentMulticastAddress, Constants.PORTS.CLIENT, aes));
         } catch (CryptoException e) {
             System.exit(1);
         }
     }
 
-    /**
-     * @param a Packet
-     * @param b Packet
-     * @return returns whether the packets are considered equal
-     * @author Nick Esposito
-     * Used for checking packets from EXPECTED_PACKETS vs what was received
-     */
-    private boolean checkPacketEquality(Packet a, Packet b) {
-        if (a.getOperationCode() != b.getOperationCode()) {
-            return false;
-        } else {
-            switch (a.getOperationCode()) {
-                case Constants.OPCODE.ANNACK: {
-                    AnnounceAckPacket an = (AnnounceAckPacket) a;
-                    AnnounceAckPacket bn = (AnnounceAckPacket) b;
 
-                    return an.equals(bn);
-                }
-                case Constants.OPCODE.ANNACKACK: {
-                    return true;
-                }
-                case Constants.OPCODE.MRCS: {
-                    SuccessfulMulticastRoomCreationPacket as = (SuccessfulMulticastRoomCreationPacket) a;
-                    SuccessfulMulticastRoomCreationPacket bs = (SuccessfulMulticastRoomCreationPacket) b;
-
-                    return as.equals(bs);
-                }
-                case Constants.OPCODE.JOINSUC: {
-                    JoinRoomSuccessPacket aj = (JoinRoomSuccessPacket) a;
-                    JoinRoomSuccessPacket bj = (JoinRoomSuccessPacket) b;
-
-                    return aj.equals(bj);
-                }
-                case Constants.OPCODE.MESSAGEACK: {
-                    MessageAckPacket am = (MessageAckPacket) a;
-                    MessageAckPacket bm = (MessageAckPacket) b;
-
-                    return am.equals(bm);
-                }
-                default:
-                    return false;
-            }
-
-        }
-    }
 }

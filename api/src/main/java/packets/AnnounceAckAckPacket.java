@@ -1,7 +1,11 @@
 package packets;
 
 import utils.Constants;
-
+/**
+ * Acknowledgement packet for announcement acks
+ *
+ * @author Nick Esposito
+ */
 public class AnnounceAckAckPacket extends Packet {
 
     public static AnnounceAckAckPacket parse(byte[] data) throws InvalidPacketFormatException {

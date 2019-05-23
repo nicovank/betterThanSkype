@@ -5,6 +5,12 @@ import utils.Constants;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * A packet for requesting to leave a room.
+ * @throws InvalidPacketFormatException if trying to parse an invalid packet
+ * @author Mike Doran
+ */
+
 public class LeaveRoomPacket extends Packet {
     private final String nickname;
     private final String roomname;
